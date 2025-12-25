@@ -73,6 +73,9 @@ function ReportContentModal({
   )
 }
 
+// WhatsApp number for support
+const WHATSAPP_NUMBER = '917780185418'
+
 export default function SettingsScreen() {
   const { user, signOut } = useAuth()
   const { isPremium } = useUser()
@@ -102,11 +105,15 @@ export default function SettingsScreen() {
   }
 
   const handleManageSubscription = () => {
-    router.push('/(paywall)/premium')
+    const message = encodeURIComponent(
+      `Hi! I need help with my Cara subscription.\n\nEmail: ${userEmail}`
+    )
+    Linking.openURL(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`)
   }
 
   const handleGiveFeedback = () => {
-    Linking.openURL('mailto:founders@plutas.in?subject=Cara App Feedback')
+    const message = encodeURIComponent('Hi! I have feedback about Cara app:')
+    Linking.openURL(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`)
   }
 
   const handlePrivacyPolicy = () => {
