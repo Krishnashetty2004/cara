@@ -22,6 +22,9 @@ import {
   LogOut,
 } from 'lucide-react-native'
 
+// WhatsApp number for support
+const WHATSAPP_NUMBER = '917780185418'
+
 // Report Content Modal Component
 function ReportContentModal({
   visible,
@@ -61,7 +64,10 @@ function ReportContentModal({
           {reportOptions.map((option) => (
             <Pressable
               key={option}
-              style={styles.reportOption}
+              style={({ pressed }) => [
+                styles.reportOption,
+                pressed && styles.reportOptionPressed
+              ]}
               onPress={() => handleReport(option)}
             >
               <Text style={styles.reportOptionText}>{option}</Text>
@@ -72,9 +78,6 @@ function ReportContentModal({
     </Modal>
   )
 }
-
-// WhatsApp number for support
-const WHATSAPP_NUMBER = '917780185418'
 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth()
@@ -128,8 +131,14 @@ export default function SettingsScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <ChevronLeft size={28} color="#FFFFFF" />
+        <Pressable
+          onPress={() => router.back()}
+          style={({ pressed }) => [
+            styles.backButton,
+            pressed && { opacity: 0.6 }
+          ]}
+        >
+          <ChevronLeft size={28} color="#1a1a2e" />
         </Pressable>
       </View>
 
@@ -162,11 +171,9 @@ export default function SettingsScreen() {
             ]}
             onPress={() => setShowReportModal(true)}
           >
-            <View style={styles.menuItemLeft}>
-              <Flag size={20} color="#9CA3AF" />
-              <Text style={styles.menuItemText}>Report content</Text>
-            </View>
-            <ChevronRight size={20} color="#9CA3AF" />
+            <Flag size={20} color="#718096" />
+            <Text style={styles.menuItemText}>Report content</Text>
+            <ChevronRight size={20} color="#A0AEC0" />
           </Pressable>
 
           <View style={styles.menuDivider} />
@@ -179,11 +186,9 @@ export default function SettingsScreen() {
             ]}
             onPress={handleManageSubscription}
           >
-            <View style={styles.menuItemLeft}>
-              <CreditCard size={20} color="#9CA3AF" />
-              <Text style={styles.menuItemText}>Manage subscription</Text>
-            </View>
-            <ChevronRight size={20} color="#9CA3AF" />
+            <CreditCard size={20} color="#718096" />
+            <Text style={styles.menuItemText}>Manage subscription</Text>
+            <ChevronRight size={20} color="#A0AEC0" />
           </Pressable>
 
           <View style={styles.menuDivider} />
@@ -196,11 +201,9 @@ export default function SettingsScreen() {
             ]}
             onPress={handleGiveFeedback}
           >
-            <View style={styles.menuItemLeft}>
-              <MessageSquare size={20} color="#9CA3AF" />
-              <Text style={styles.menuItemText}>Give feedback</Text>
-            </View>
-            <ChevronRight size={20} color="#9CA3AF" />
+            <MessageSquare size={20} color="#718096" />
+            <Text style={styles.menuItemText}>Give feedback</Text>
+            <ChevronRight size={20} color="#A0AEC0" />
           </Pressable>
 
           <View style={styles.menuDivider} />
@@ -213,11 +216,9 @@ export default function SettingsScreen() {
             ]}
             onPress={handleSignOut}
           >
-            <View style={styles.menuItemLeft}>
-              <LogOut size={20} color="#9CA3AF" />
-              <Text style={styles.menuItemText}>Sign out</Text>
-            </View>
-            <ChevronRight size={20} color="#9CA3AF" />
+            <LogOut size={20} color="#F56565" />
+            <Text style={[styles.menuItemText, styles.menuItemTextDanger]}>Sign out</Text>
+            <ChevronRight size={20} color="#A0AEC0" />
           </Pressable>
         </View>
 
@@ -230,7 +231,7 @@ export default function SettingsScreen() {
         <Pressable onPress={handlePrivacyPolicy}>
           <Text style={styles.footerLink}>Privacy Policy</Text>
         </Pressable>
-        <Text style={styles.footerDot}>  •  </Text>
+        <Text style={styles.footerDot}>•</Text>
         <Pressable onPress={handleTermsOfService}>
           <Text style={styles.footerLink}>Terms and Conditions</Text>
         </Pressable>
@@ -248,7 +249,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#F5F9FC',
   },
   header: {
     paddingHorizontal: 16,
@@ -266,7 +267,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#1a1a2e',
     marginBottom: 24,
   },
   profileSection: {
@@ -289,45 +290,49 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#1a1a2e',
     marginBottom: 4,
   },
   userEmail: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#718096',
     marginBottom: 4,
   },
   subscriptionStatus: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#718096',
   },
   menuCard: {
-    backgroundColor: '#252542',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingVertical: 18,
     paddingHorizontal: 16,
   },
   menuItemPressed: {
-    backgroundColor: '#3a3a5c',
-  },
-  menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    backgroundColor: '#EDF2F7',
   },
   menuItemText: {
+    flex: 1,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#2D3748',
+    marginLeft: 12,
+  },
+  menuItemTextDanger: {
+    color: '#F56565',
   },
   menuDivider: {
     height: 1,
-    backgroundColor: '#3a3a5c',
+    backgroundColor: '#EDF2F7',
     marginHorizontal: 16,
   },
   spacer: {
@@ -342,23 +347,23 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#718096',
     textDecorationLine: 'underline',
   },
   footerDot: {
-    color: '#9CA3AF',
+    color: '#718096',
     marginHorizontal: 8,
   },
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#252542',
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     width: '100%',
@@ -373,29 +378,34 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#1a1a2e',
   },
   modalClose: {
     fontSize: 24,
-    color: '#9CA3AF',
+    color: '#718096',
     padding: 4,
   },
   modalDescription: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#718096',
     marginBottom: 20,
     lineHeight: 20,
   },
   reportOption: {
-    backgroundColor: '#3a3a5c',
+    backgroundColor: '#F5F9FC',
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 20,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  reportOptionPressed: {
+    backgroundColor: '#EDF2F7',
   },
   reportOptionText: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#2D3748',
     textAlign: 'center',
   },
 })

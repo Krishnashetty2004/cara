@@ -1,13 +1,11 @@
-import { View, Text, Pressable, ActivityIndicator, Alert, StyleSheet, Dimensions, Image, Linking } from 'react-native'
+import { View, Text, Pressable, ActivityIndicator, Alert, StyleSheet, Dimensions, Linking } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { LinearGradient } from 'expo-linear-gradient'
 import Svg, { Path } from 'react-native-svg'
 
 const { width, height } = Dimensions.get('window')
-const SPLASH_BG = require('@/assets/images/splashs.jpeg')
 
 // Google "G" Logo Component (official colors)
 const GoogleLogo = () => (
@@ -31,6 +29,11 @@ const GoogleLogo = () => (
   </Svg>
 )
 
+// Decorative blob component
+const Blob = ({ style, color = '#D4E5F7' }: { style?: any; color?: string }) => (
+  <View style={[styles.blob, style, { backgroundColor: color }]} />
+)
+
 export default function LoginScreen() {
   const insets = useSafeAreaInsets()
   const { user, isLoading, error, signIn, clearError } = useAuth()
@@ -49,7 +52,6 @@ export default function LoginScreen() {
   }, [error, clearError])
 
   const handleSignIn = async () => {
-    // Prevent double sign-in if already authenticated
     if (user) {
       router.replace('/(main)/home')
       return
@@ -57,99 +59,88 @@ export default function LoginScreen() {
     await signIn()
   }
 
-  const openPrivacyPolicy = async () => {
-    const url = 'https://cara.plutas.in/privacy'
-    const supported = await Linking.canOpenURL(url)
-    if (supported) {
-      await Linking.openURL(url)
-    } else {
-      Alert.alert('Error', 'Unable to open Privacy Policy')
-    }
+  const openPrivacyPolicy = () => {
+    Linking.openURL('https://cara.plutas.in/privacy')
   }
 
-  const openTerms = async () => {
-    const url = 'https://cara.plutas.in/terms'
-    const supported = await Linking.canOpenURL(url)
-    if (supported) {
-      await Linking.openURL(url)
-    } else {
-      Alert.alert('Error', 'Unable to open Terms of Service')
-    }
+  const openTerms = () => {
+    Linking.openURL('https://cara.plutas.in/terms')
   }
 
   return (
     <View style={styles.container}>
-      {/* Background Image */}
-      <Image
-        source={SPLASH_BG}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      />
+      {/* Decorative Blobs */}
+      <Blob style={styles.blobTopLeft} color="#D4E5F7" />
+      <Blob style={styles.blobTopRight} color="#4A90D9" />
+      <Blob style={styles.blobBottomLeft} color="#D4E5F7" />
+      <Blob style={styles.blobBottomRight} color="#D4E5F7" />
 
-      {/* Gradient Overlay */}
-      <LinearGradient
-        colors={[
-          'rgba(10, 22, 40, 0.6)',
-          'rgba(10, 22, 40, 0.2)',
-          'rgba(10, 22, 40, 0.4)',
-          'rgba(10, 22, 40, 0.85)',
-        ]}
-        locations={[0, 0.3, 0.6, 1]}
-        style={styles.gradientOverlay}
-      />
+      {/* Stars */}
+      <Text style={styles.star1}>✦</Text>
+      <Text style={styles.star2}>✦</Text>
+      <Text style={styles.star3}>✦</Text>
 
       {/* Content */}
-      <View style={[styles.content, { paddingTop: insets.top }]}>
-        {/* Top Spacer - pushes content down */}
-        <View style={styles.topSpacer} />
+      <View style={[styles.content, { paddingTop: insets.top + 80 }]}>
+        {/* App Name */}
+        <Text style={styles.appName}>cara</Text>
 
-        {/* Header - Centered */}
-        <View style={styles.header}>
-          <Text style={styles.appName}>cara</Text>
-          <Text style={styles.tagline}>Your digital friends</Text>
+        {/* Tagline */}
+        <View style={styles.taglineContainer}>
+          <Text style={styles.tagline}>ai friends</Text>
+          <Text style={styles.taglineAccent}>just like your real friends</Text>
         </View>
 
-        {/* Bottom Spacer - pushes button down */}
-        <View style={styles.bottomSpacer} />
+        {/* Subtitle */}
+        <Text style={styles.subtitle}>Say hi to Preethi & Ira</Text>
+        <Text style={styles.description}>
+          Human, realistic companions for meaningful conversations that help with life.
+        </Text>
 
-        {/* Footer */}
-        <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
-          {/* Google Button - Using View wrapper for reliable background */}
-          <View style={[
-            styles.buttonWrapper,
-            isPressed && styles.buttonWrapperPressed
-          ]}>
-            <Pressable
-              onPress={handleSignIn}
-              onPressIn={() => setIsPressed(true)}
-              onPressOut={() => setIsPressed(false)}
-              disabled={isLoading || !!user}
-              style={styles.buttonPressable}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#1a1a1a" size="small" />
-              ) : (
-                <>
-                  <View style={styles.googleIconWrapper}>
-                    <GoogleLogo />
-                  </View>
-                  <Text style={styles.googleButtonText}>Continue with Google</Text>
-                </>
-              )}
-            </Pressable>
-          </View>
+        {/* Spacer */}
+        <View style={styles.spacer} />
 
-          {/* Links */}
-          <View style={styles.linksContainer}>
-            <Pressable onPress={openPrivacyPolicy}>
-              <Text style={styles.linkText}>Privacy policy</Text>
-            </Pressable>
-            <Text style={styles.linkDot}>•</Text>
-            <Pressable onPress={openTerms}>
-              <Text style={styles.linkText}>Terms of service</Text>
-            </Pressable>
-          </View>
+        {/* Google Sign In Button */}
+        <View style={[
+          styles.buttonWrapper,
+          isPressed && styles.buttonWrapperPressed
+        ]}>
+          <Pressable
+            onPress={handleSignIn}
+            onPressIn={() => setIsPressed(true)}
+            onPressOut={() => setIsPressed(false)}
+            disabled={isLoading || !!user}
+            style={styles.buttonPressable}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <>
+                <View style={styles.googleIconWrapper}>
+                  <GoogleLogo />
+                </View>
+                <Text style={styles.googleButtonText}>Continue with Google</Text>
+              </>
+            )}
+          </Pressable>
         </View>
+
+        {/* iOS Coming Soon */}
+        <View style={styles.iosButton}>
+          <Text style={styles.iosIcon}>🍎</Text>
+          <Text style={styles.iosText}>iOS coming soon</Text>
+        </View>
+      </View>
+
+      {/* Footer */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
+        <Pressable onPress={openPrivacyPolicy}>
+          <Text style={styles.footerLink}>Privacy Policy</Text>
+        </Pressable>
+        <Text style={styles.footerDot}>•</Text>
+        <Pressable onPress={openTerms}>
+          <Text style={styles.footerLink}>Terms of Service</Text>
+        </Pressable>
       </View>
     </View>
   )
@@ -158,100 +149,167 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a1628',
+    backgroundColor: '#F5F9FC',
   },
-  backgroundImage: {
+  blob: {
     position: 'absolute',
-    width: width,
-    height: height,
+    borderRadius: 999,
+    opacity: 0.6,
   },
-  gradientOverlay: {
+  blobTopLeft: {
+    width: 300,
+    height: 300,
+    top: -100,
+    left: -100,
+  },
+  blobTopRight: {
+    width: 80,
+    height: 80,
+    top: 200,
+    right: 40,
+    opacity: 0.4,
+  },
+  blobBottomLeft: {
+    width: 120,
+    height: 120,
+    bottom: 200,
+    left: 20,
+  },
+  blobBottomRight: {
+    width: 200,
+    height: 200,
+    bottom: -50,
+    right: -50,
+  },
+  star1: {
     position: 'absolute',
-    width: width,
-    height: height,
+    top: 150,
+    left: '15%',
+    fontSize: 16,
+    color: '#718096',
+  },
+  star2: {
+    position: 'absolute',
+    top: 180,
+    right: 80,
+    fontSize: 20,
+    color: '#718096',
+  },
+  star3: {
+    position: 'absolute',
+    bottom: 300,
+    right: 30,
+    fontSize: 14,
+    color: '#718096',
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-  },
-  topSpacer: {
-    flex: 1,
-  },
-  header: {
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 32,
   },
   appName: {
-    fontSize: 72,
-    color: '#FFFFFF',
-    letterSpacing: -2,
+    fontSize: 64,
     fontFamily: 'PlayfairDisplay_700Bold',
-    textShadowColor: 'rgba(0, 0, 0, 0.4)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
-    textAlign: 'center',
+    color: '#4A90D9',
+    letterSpacing: -2,
+    marginBottom: 40,
+  },
+  taglineContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
   },
   tagline: {
-    fontSize: 17,
-    color: 'rgba(255, 255, 255, 0.75)',
-    marginTop: 12,
-    fontFamily: 'Inter_400Regular',
-    letterSpacing: 0.5,
+    fontSize: 32,
+    fontFamily: 'PlayfairDisplay_400Regular',
+    color: '#1a1a2e',
+  },
+  taglineAccent: {
+    fontSize: 32,
+    fontFamily: 'PlayfairDisplay_400Regular',
+    fontStyle: 'italic',
+    color: '#E8927C',
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#2D3748',
+    marginBottom: 8,
+  },
+  description: {
+    fontSize: 16,
+    color: '#718096',
     textAlign: 'center',
+    lineHeight: 24,
+    maxWidth: 300,
   },
-  bottomSpacer: {
-    flex: 1.5,
+  spacer: {
+    flex: 1,
   },
-  footer: {
-    alignItems: 'center',
-  },
-  // WHITE BUTTON - View wrapper approach
+  // Dark button
   buttonWrapper: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1a1a2e',
     borderRadius: 100,
     width: '100%',
+    maxWidth: 320,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
     overflow: 'hidden',
   },
   buttonWrapperPressed: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#2D3748',
     transform: [{ scale: 0.98 }],
   },
   buttonPressable: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
+    paddingVertical: 18,
     paddingHorizontal: 32,
-    minHeight: 56,
   },
   googleIconWrapper: {
     marginRight: 12,
   },
   googleButtonText: {
-    color: '#1a1a1a',
+    color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '600',
-    fontFamily: 'Inter_600SemiBold',
   },
-  linksContainer: {
+  iosButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 24,
+    justifyContent: 'center',
+    marginTop: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    width: '100%',
+    maxWidth: 320,
   },
-  linkText: {
-    color: 'rgba(255, 255, 255, 0.6)',
+  iosIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  iosText: {
+    fontSize: 16,
+    color: '#718096',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  footerLink: {
     fontSize: 14,
-    fontFamily: 'Inter_400Regular',
+    color: '#718096',
     textDecorationLine: 'underline',
   },
-  linkDot: {
-    color: 'rgba(255, 255, 255, 0.5)',
-    marginHorizontal: 10,
-    fontSize: 14,
+  footerDot: {
+    color: '#718096',
+    marginHorizontal: 8,
   },
 })
