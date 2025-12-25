@@ -1,319 +1,394 @@
-import { View, Text, Pressable, Alert, ScrollView, Linking, useWindowDimensions, StyleSheet } from 'react-native'
+import React, { useState } from 'react'
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  ScrollView,
+  Linking,
+  Modal,
+  Alert,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
-import { Crown, LogOut, Shield, FileText, ChevronRight, ChevronLeft } from 'lucide-react-native'
-import { LinearGradient } from 'expo-linear-gradient'
-import { useUser } from '@/hooks/useUser'
 import { useAuth } from '@/hooks/useAuth'
-import { CONFIG } from '@/constants/config'
+import { useUser } from '@/hooks/useUser'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Flag,
+  CreditCard,
+  MessageSquare,
+  LogOut,
+} from 'lucide-react-native'
 
-// Brand colors - Light Blue Theme
-const colors = {
-  background: '#F8FAFC',
-  surface: '#FFFFFF',
-  surfaceLight: '#EFF6FF',
-  primary: '#3B82F6',
-  text: '#1E293B',
-  textSecondary: '#475569',
-  textMuted: '#94A3B8',
-  border: '#E2E8F0',
-  success: '#10B981',
-  danger: '#EF4444',
-}
+// Report Content Modal Component
+function ReportContentModal({
+  visible,
+  onClose
+}: {
+  visible: boolean
+  onClose: () => void
+}) {
+  const reportOptions = [
+    'Inappropriate content',
+    'Harassment or bullying',
+    'Violence or threats',
+    'Spam or misleading',
+    'Other',
+  ]
 
-export default function SettingsScreen() {
-  const { isPremium, remainingMinutes, subscription } = useUser()
-  const { signOut } = useAuth()
-  const { width } = useWindowDimensions()
-
-  const isSmallScreen = width < 375
-  const horizontalPadding = isSmallScreen ? 16 : 24
-
-  const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: signOut },
-    ])
-  }
-
-  const openPrivacyPolicy = () => {
-    Linking.openURL('https://cara.app/privacy')
-  }
-
-  const openTermsOfService = () => {
-    Linking.openURL('https://cara.app/terms')
-  }
-
-  const getSubscriptionInfo = () => {
-    if (!subscription?.current_period_end) return null
-    const endDate = new Date(subscription.current_period_end)
-    return `Renews on ${endDate.toLocaleDateString()}`
+  const handleReport = (reason: string) => {
+    Alert.alert('Report Submitted', `Thank you for reporting: ${reason}`)
+    onClose()
   }
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 40 }}
-        >
-          {/* Header */}
-          <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
-            <Pressable
-              onPress={() => router.back()}
-              style={({ pressed }) => [
-                styles.backButton,
-                { opacity: pressed ? 0.5 : 1 },
-              ]}
-            >
-              <ChevronLeft color={colors.text} size={28} />
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Report Content</Text>
+            <Pressable onPress={onClose}>
+              <Text style={styles.modalClose}>✕</Text>
             </Pressable>
-            <Text style={styles.headerTitle}>Settings</Text>
           </View>
 
-          <View style={{ paddingHorizontal: horizontalPadding }}>
-            {/* Premium Section */}
-            <View style={[styles.card, isPremium && styles.cardPremium]}>
-              <View style={styles.cardHeader}>
-                <View style={styles.crownContainer}>
-                  <Crown
-                    color={isPremium ? colors.primary : colors.textMuted}
-                    size={24}
-                    fill={isPremium ? colors.primary : 'transparent'}
-                  />
-                </View>
-                <Text style={styles.cardTitle}>
-                  {isPremium ? 'Premium Member' : 'Free Plan'}
-                </Text>
-              </View>
+          <Text style={styles.modalDescription}>
+            Help us keep our community safe by reporting inappropriate AI-generated content.
+          </Text>
 
-              {isPremium ? (
-                <View>
-                  <Text style={styles.premiumText}>
-                    Unlimited voice calls
-                  </Text>
-                  {getSubscriptionInfo() && (
-                    <Text style={styles.subscriptionInfo}>
-                      {getSubscriptionInfo()}
-                    </Text>
-                  )}
-                </View>
-              ) : (
-                <>
-                  <Text style={styles.freeText}>
-                    {remainingMinutes} minutes remaining today
-                  </Text>
-                  <Pressable
-                    onPress={() => router.push('/(paywall)/premium')}
-                    style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
-                  >
-                    <LinearGradient
-                      colors={[colors.primary, '#2563EB']}
-                      style={styles.upgradeButton}
-                    >
-                      <Text style={styles.upgradeButtonText}>
-                        Upgrade to Premium - ₹{CONFIG.SUBSCRIPTION_PRICE_INR}/{CONFIG.SUBSCRIPTION_PERIOD}
-                      </Text>
-                    </LinearGradient>
-                  </Pressable>
-                </>
-              )}
-            </View>
-
-            {/* Legal Section */}
-            <Text style={styles.sectionTitle}>Legal</Text>
-            <View style={styles.menuCard}>
-              <MenuItem
-                icon={<Shield color={colors.textSecondary} size={22} />}
-                title="Privacy Policy"
-                onPress={openPrivacyPolicy}
-              />
-              <View style={styles.menuDivider} />
-              <MenuItem
-                icon={<FileText color={colors.textSecondary} size={22} />}
-                title="Terms of Service"
-                onPress={openTermsOfService}
-              />
-            </View>
-
-            {/* Account Section */}
-            <Text style={styles.sectionTitle}>Account</Text>
-            <View style={styles.menuCard}>
-              <MenuItem
-                icon={<LogOut color={colors.danger} size={22} />}
-                title="Sign Out"
-                titleColor={colors.danger}
-                onPress={handleSignOut}
-              />
-            </View>
-
-            {/* Version */}
-            <Text style={styles.version}>Cara v1.0.0</Text>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+          {reportOptions.map((option) => (
+            <Pressable
+              key={option}
+              style={styles.reportOption}
+              onPress={() => handleReport(option)}
+            >
+              <Text style={styles.reportOptionText}>{option}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    </Modal>
   )
 }
 
-function MenuItem({
-  icon,
-  title,
-  titleColor = colors.text,
-  onPress,
-}: {
-  icon: React.ReactNode
-  title: string
-  titleColor?: string
-  onPress: () => void
-}) {
+export default function SettingsScreen() {
+  const { user, signOut } = useAuth()
+  const { isPremium } = useUser()
+  const [showReportModal, setShowReportModal] = useState(false)
+
+  // Get user info
+  const userName = user?.name || 'User'
+  const userEmail = user?.email || 'user@email.com'
+  const userInitial = userName.charAt(0).toUpperCase()
+
+  const handleSignOut = async () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            await signOut()
+            router.replace('/(auth)/login')
+          }
+        },
+      ]
+    )
+  }
+
+  const handleManageSubscription = () => {
+    router.push('/(paywall)/premium')
+  }
+
+  const handleGiveFeedback = () => {
+    Linking.openURL('mailto:founders@plutas.in?subject=Cara App Feedback')
+  }
+
+  const handlePrivacyPolicy = () => {
+    Linking.openURL('https://cara.plutas.in/privacy')
+  }
+
+  const handleTermsOfService = () => {
+    Linking.openURL('https://cara.plutas.in/terms')
+  }
+
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.menuItem,
-        { backgroundColor: pressed ? colors.surfaceLight : 'transparent' },
-      ]}
-    >
-      <View style={styles.menuIconContainer}>{icon}</View>
-      <Text style={[styles.menuTitle, { color: titleColor }]}>{title}</Text>
-      <ChevronRight color={colors.textMuted} size={20} />
-    </Pressable>
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Pressable onPress={() => router.back()} style={styles.backButton}>
+          <ChevronLeft size={28} color="#FFFFFF" />
+        </Pressable>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Title */}
+        <Text style={styles.title}>Profile</Text>
+
+        {/* User Profile Section */}
+        <View style={styles.profileSection}>
+          {/* Avatar */}
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{userInitial}</Text>
+          </View>
+
+          {/* User Info */}
+          <Text style={styles.userName}>{userName}</Text>
+          <Text style={styles.userEmail}>{userEmail}</Text>
+          <Text style={styles.subscriptionStatus}>
+            Subscription: {isPremium ? 'Active' : 'Inactive'}
+          </Text>
+        </View>
+
+        {/* Menu Options */}
+        <View style={styles.menuCard}>
+          {/* Report Content */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.menuItem,
+              pressed && styles.menuItemPressed
+            ]}
+            onPress={() => setShowReportModal(true)}
+          >
+            <View style={styles.menuItemLeft}>
+              <Flag size={20} color="#9CA3AF" />
+              <Text style={styles.menuItemText}>Report content</Text>
+            </View>
+            <ChevronRight size={20} color="#9CA3AF" />
+          </Pressable>
+
+          <View style={styles.menuDivider} />
+
+          {/* Manage Subscription */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.menuItem,
+              pressed && styles.menuItemPressed
+            ]}
+            onPress={handleManageSubscription}
+          >
+            <View style={styles.menuItemLeft}>
+              <CreditCard size={20} color="#9CA3AF" />
+              <Text style={styles.menuItemText}>Manage subscription</Text>
+            </View>
+            <ChevronRight size={20} color="#9CA3AF" />
+          </Pressable>
+
+          <View style={styles.menuDivider} />
+
+          {/* Give Feedback */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.menuItem,
+              pressed && styles.menuItemPressed
+            ]}
+            onPress={handleGiveFeedback}
+          >
+            <View style={styles.menuItemLeft}>
+              <MessageSquare size={20} color="#9CA3AF" />
+              <Text style={styles.menuItemText}>Give feedback</Text>
+            </View>
+            <ChevronRight size={20} color="#9CA3AF" />
+          </Pressable>
+
+          <View style={styles.menuDivider} />
+
+          {/* Sign Out */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.menuItem,
+              pressed && styles.menuItemPressed
+            ]}
+            onPress={handleSignOut}
+          >
+            <View style={styles.menuItemLeft}>
+              <LogOut size={20} color="#9CA3AF" />
+              <Text style={styles.menuItemText}>Sign out</Text>
+            </View>
+            <ChevronRight size={20} color="#9CA3AF" />
+          </Pressable>
+        </View>
+
+        {/* Spacer */}
+        <View style={styles.spacer} />
+      </ScrollView>
+
+      {/* Footer Links */}
+      <View style={styles.footer}>
+        <Pressable onPress={handlePrivacyPolicy}>
+          <Text style={styles.footerLink}>Privacy Policy</Text>
+        </Pressable>
+        <Text style={styles.footerDot}>  •  </Text>
+        <Pressable onPress={handleTermsOfService}>
+          <Text style={styles.footerLink}>Terms and Conditions</Text>
+        </Pressable>
+      </View>
+
+      {/* Report Modal */}
+      <ReportContentModal
+        visible={showReportModal}
+        onClose={() => setShowReportModal(false)}
+      />
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
+    backgroundColor: '#1a1a2e',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   backButton: {
-    padding: 8,
-    marginLeft: -8,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
   },
-  headerTitle: {
-    fontSize: 28,
-    color: colors.text,
-    marginLeft: 8,
-    fontFamily: 'PlayfairDisplay_600SemiBold',
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: 20,
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#FFFFFF',
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  cardPremium: {
-    borderColor: colors.primary,
-    borderWidth: 1.5,
+  profileSection: {
+    marginBottom: 32,
   },
-  cardHeader: {
-    flexDirection: 'row',
+  avatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#14B8A6',
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
   },
-  crownContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardTitle: {
-    fontSize: 20,
-    color: colors.text,
-    marginLeft: 14,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  premiumText: {
-    fontSize: 16,
-    color: colors.success,
-    fontFamily: 'Inter_500Medium',
-  },
-  subscriptionInfo: {
-    fontSize: 13,
-    color: colors.textMuted,
-    fontFamily: 'Inter_400Regular',
-    marginTop: 6,
-  },
-  freeText: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    marginBottom: 18,
-    fontFamily: 'Inter_400Regular',
-  },
-  upgradeButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 14,
-    alignItems: 'center',
-  },
-  upgradeButtonText: {
-    fontSize: 16,
+  avatarText: {
+    fontSize: 28,
+    fontWeight: '700',
     color: '#FFFFFF',
-    fontFamily: 'Inter_600SemiBold',
   },
-  sectionTitle: {
+  userName: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  userEmail: {
     fontSize: 14,
-    color: colors.textMuted,
-    marginBottom: 12,
-    fontFamily: 'Inter_500Medium',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    color: '#9CA3AF',
+    marginBottom: 4,
+  },
+  subscriptionStatus: {
+    fontSize: 14,
+    color: '#9CA3AF',
   },
   menuCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#252542',
     borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    justifyContent: 'space-between',
+    paddingVertical: 18,
+    paddingHorizontal: 16,
   },
-  menuIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: colors.surfaceLight,
+  menuItemPressed: {
+    backgroundColor: '#3a3a5c',
+  },
+  menuItemLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 12,
   },
-  menuTitle: {
+  menuItemText: {
     fontSize: 16,
-    marginLeft: 14,
-    flex: 1,
-    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
   },
   menuDivider: {
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: '#3a3a5c',
     marginHorizontal: 16,
   },
-  version: {
-    fontSize: 13,
-    color: colors.textMuted,
+  spacer: {
+    height: 40,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingBottom: 32,
+  },
+  footerLink: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    textDecorationLine: 'underline',
+  },
+  footerDot: {
+    color: '#9CA3AF',
+    marginHorizontal: 8,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#252542',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 360,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  modalClose: {
+    fontSize: 24,
+    color: '#9CA3AF',
+    padding: 4,
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  reportOption: {
+    backgroundColor: '#3a3a5c',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
+  reportOptionText: {
+    fontSize: 16,
+    color: '#FFFFFF',
     textAlign: 'center',
-    fontFamily: 'Inter_400Regular',
-    marginTop: 8,
   },
 })
