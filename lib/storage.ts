@@ -7,6 +7,9 @@ export const STORAGE_KEYS = {
   USER_PREFERENCES: 'user_preferences',
   NOTIFICATION_SETTINGS: 'notification_settings',
   FIRST_LAUNCH: 'first_launch',
+  FREE_MINUTES_DATA: 'free_minutes_data',
+  LAST_ACTIVITY: 'last_activity',
+  SELECTED_CHARACTER: 'selected_character',
 } as const
 
 type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]
@@ -99,4 +102,54 @@ export async function isFirstLaunch(): Promise<boolean> {
     return true
   }
   return false
+}
+
+// Free minutes tracking with 24-hour reset
+export interface FreeMinutesData {
+  minutesUsed: number
+  lastResetTimestamp: number // Unix timestamp in ms
+}
+
+export async function getFreeMinutesData(): Promise<FreeMinutesData> {
+  const data = await getItem<FreeMinutesData>(STORAGE_KEYS.FREE_MINUTES_DATA)
+
+  if (!data) {
+    // First time - initialize with 0 minutes used
+    const initial: FreeMinutesData = {
+      minutesUsed: 0,
+      lastResetTimestamp: Date.now(),
+    }
+    await setItem(STORAGE_KEYS.FREE_MINUTES_DATA, initial)
+    return initial
+  }
+
+  // Check if 24 hours have passed
+  const now = Date.now()
+  const hoursSinceReset = (now - data.lastResetTimestamp) / (1000 * 60 * 60)
+
+  if (hoursSinceReset >= 24) {
+    // Reset minutes
+    const reset: FreeMinutesData = {
+      minutesUsed: 0,
+      lastResetTimestamp: now,
+    }
+    await setItem(STORAGE_KEYS.FREE_MINUTES_DATA, reset)
+    return reset
+  }
+
+  return data
+}
+
+export async function incrementFreeMinutesUsed(minutes: number): Promise<void> {
+  const data = await getFreeMinutesData()
+  await setItem(STORAGE_KEYS.FREE_MINUTES_DATA, {
+    ...data,
+    minutesUsed: data.minutesUsed + minutes,
+  })
+}
+
+export async function getTimeUntilReset(): Promise<number> {
+  const data = await getFreeMinutesData()
+  const resetTime = data.lastResetTimestamp + 24 * 60 * 60 * 1000
+  return Math.max(0, resetTime - Date.now())
 }
