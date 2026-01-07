@@ -26,10 +26,27 @@ import {
 // API Keys from Supabase secrets
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')!
 const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY')!
+const SARVAM_API_KEY = Deno.env.get('SARVAM_API_KEY')!
 
-// ElevenLabs voice IDs and settings for characters
-const CHARACTER_VOICES: Record<string, { voiceId: string; settings: object }> = {
+// Character voice configurations
+interface ElevenLabsVoice {
+  provider: 'elevenlabs'
+  voiceId: string
+  settings: object
+}
+
+interface SarvamVoice {
+  provider: 'sarvam'
+  voiceId: string
+  model: string
+  languageCode: string
+}
+
+type CharacterVoice = ElevenLabsVoice | SarvamVoice
+
+const CHARACTER_VOICES: Record<string, CharacterVoice> = {
   preethi: {
+    provider: 'elevenlabs',
     voiceId: 'ryIIztHPLYSJ74ueXxnO',
     settings: {
       stability: 0.25,
@@ -39,6 +56,7 @@ const CHARACTER_VOICES: Record<string, { voiceId: string; settings: object }> = 
     },
   },
   ira: {
+    provider: 'elevenlabs',
     voiceId: 'mg9npuuaf8WJphS6E0Rt',
     settings: {
       stability: 0.55,
@@ -46,6 +64,12 @@ const CHARACTER_VOICES: Record<string, { voiceId: string; settings: object }> = 
       style: 0.35,
       use_speaker_boost: true,
     },
+  },
+  riya: {
+    provider: 'sarvam',
+    voiceId: 'manisha', // Sarvam AI Telugu female voice - chaotic bestie
+    model: 'bulbul:v2',
+    languageCode: 'te-IN',
   },
 }
 
@@ -156,43 +180,29 @@ serve(async (req: Request) => {
       const ttsStart = Date.now()
       const character = CHARACTER_VOICES[character_id] || CHARACTER_VOICES.preethi
 
-      const ttsResponse = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${character.voiceId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Accept': 'audio/mpeg',
-            'Content-Type': 'application/json',
-            'xi-api-key': ELEVENLABS_API_KEY,
-          },
-          body: JSON.stringify({
-            text: opener_text,
-            model_id: 'eleven_turbo_v2_5', // Reliable and fast
-            voice_settings: character.settings,
-          }),
-        }
-      )
+      try {
+        const audioArrayBuffer = await synthesizeSpeech(opener_text, character)
+        const audioBase64Out = arrayBufferToBase64(audioArrayBuffer)
 
-      if (!ttsResponse.ok) {
-        console.error('[voice-turn] ElevenLabs opener error')
+        latency.tts = Date.now() - ttsStart
+        latency.total = Date.now() - startTime
+
+        // Determine audio format based on provider
+        const audioFormat = character.provider === 'sarvam' ? 'wav' : 'mp3'
+
+        console.log(`[voice-turn] Opener TTS (${character.provider}): ${audioArrayBuffer.byteLength} bytes (${latency.tts}ms)`)
+
+        return jsonResponse({
+          success: true,
+          assistant_response: opener_text,
+          audio_base64: audioBase64Out,
+          audio_format: audioFormat,
+          latency_ms: latency,
+        } as VoiceTurnResponse, 200, corsHeaders)
+      } catch (ttsError) {
+        console.error('[voice-turn] Opener TTS error:', ttsError)
         return jsonResponse({ error: 'Opener synthesis failed' }, 500, corsHeaders)
       }
-
-      const audioArrayBuffer = await ttsResponse.arrayBuffer()
-      const audioBase64Out = arrayBufferToBase64(audioArrayBuffer)
-
-      latency.tts = Date.now() - ttsStart
-      latency.total = Date.now() - startTime
-
-      console.log(`[voice-turn] Opener TTS: ${audioArrayBuffer.byteLength} bytes (${latency.tts}ms)`)
-
-      return jsonResponse({
-        success: true,
-        assistant_response: opener_text,
-        audio_base64: audioBase64Out,
-        audio_format: 'mp3',
-        latency_ms: latency,
-      } as VoiceTurnResponse, 200, corsHeaders)
     }
 
     // Regular voice turn mode
@@ -332,7 +342,7 @@ serve(async (req: Request) => {
               sentences.push(sentence)
 
               // Fire TTS request immediately for this sentence (parallel processing)
-              const ttsPromise = synthesizeSpeech(sentence, character, ELEVENLABS_API_KEY)
+              const ttsPromise = synthesizeSpeech(sentence, character)
               ttsPromises.push(ttsPromise)
 
               if (!firstSentenceSent) {
@@ -353,7 +363,7 @@ serve(async (req: Request) => {
     if (currentSentence.trim().length > 0) {
       const sentence = currentSentence.trim()
       sentences.push(sentence)
-      ttsPromises.push(synthesizeSpeech(sentence, character, ELEVENLABS_API_KEY))
+      ttsPromises.push(synthesizeSpeech(sentence, character))
     }
 
     latency.llm = Date.now() - llmStart
@@ -395,7 +405,10 @@ serve(async (req: Request) => {
     latency.tts = Date.now() - ttsStart
     latency.total = Date.now() - startTime
 
-    console.log(`[voice-turn] TTS parallel complete (${latency.tts}ms), total: ${latency.total}ms`)
+    // Determine audio format based on provider
+    const outputAudioFormat = character.provider === 'sarvam' ? 'wav' : 'mp3'
+
+    console.log(`[voice-turn] TTS parallel complete (${character.provider}, ${latency.tts}ms), total: ${latency.total}ms`)
 
     // ========================================
     // Return response
@@ -405,7 +418,7 @@ serve(async (req: Request) => {
       user_transcript: userTranscript,
       assistant_response: assistantResponse,
       audio_base64: audioBase64Out,
-      audio_format: 'mp3',
+      audio_format: outputAudioFormat,
       latency_ms: latency,
     } as VoiceTurnResponse, 200, corsHeaders)
 
@@ -424,37 +437,76 @@ function jsonResponse(data: object, status: number, corsHeaders: Record<string, 
 }
 
 // Synthesize speech for a single sentence (used for parallel TTS)
+// Supports both ElevenLabs and Sarvam AI
 async function synthesizeSpeech(
   text: string,
-  character: { voiceId: string; settings: object },
-  apiKey: string
+  character: CharacterVoice
 ): Promise<ArrayBuffer> {
-  console.log(`[TTS] Synthesizing: "${text.substring(0, 50)}..." with voice ${character.voiceId}`)
+  console.log(`[TTS] Synthesizing with ${character.provider}: "${text.substring(0, 50)}..."`)
 
-  const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${character.voiceId}`,
-    {
+  if (character.provider === 'sarvam') {
+    // Sarvam AI TTS for Telugu (Riya)
+    const sarvamChar = character as SarvamVoice
+    const response = await fetch('https://api.sarvam.ai/text-to-speech', {
       method: 'POST',
       headers: {
-        'Accept': 'audio/mpeg',
         'Content-Type': 'application/json',
-        'xi-api-key': apiKey,
+        'api-subscription-key': SARVAM_API_KEY,
       },
       body: JSON.stringify({
-        text,
-        model_id: 'eleven_turbo_v2_5',
-        voice_settings: character.settings,
+        text: text,
+        target_language_code: sarvamChar.languageCode, // te-IN for Telugu
+        speaker: sarvamChar.voiceId, // manisha
+        model: sarvamChar.model, // bulbul:v2
+        pitch: 0,
+        pace: 1.1, // Slightly faster for energetic personality
+        loudness: 1.2, // Slightly louder for expressive speech
+        speech_sample_rate: 22050,
+        enable_preprocessing: true,
       }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`[TTS] Sarvam error ${response.status}:`, errorText)
+      throw new Error(`Sarvam TTS failed: ${response.status} - ${errorText}`)
     }
-  )
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error(`[TTS] ElevenLabs error ${response.status}:`, errorText)
-    throw new Error(`ElevenLabs TTS failed: ${response.status} - ${errorText}`)
+    const data = await response.json()
+    // Sarvam returns base64 audio in the audios array
+    if (data.audios && data.audios[0]) {
+      const audioBase64 = data.audios[0]
+      return base64ToArrayBuffer(audioBase64)
+    }
+    throw new Error('Sarvam TTS returned no audio')
+  } else {
+    // ElevenLabs TTS (Preethi, Ira)
+    const elevenChar = character as ElevenLabsVoice
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${elevenChar.voiceId}`,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': ELEVENLABS_API_KEY,
+        },
+        body: JSON.stringify({
+          text,
+          model_id: 'eleven_turbo_v2_5',
+          voice_settings: elevenChar.settings,
+        }),
+      }
+    )
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`[TTS] ElevenLabs error ${response.status}:`, errorText)
+      throw new Error(`ElevenLabs TTS failed: ${response.status} - ${errorText}`)
+    }
+
+    return response.arrayBuffer()
   }
-
-  return response.arrayBuffer()
 }
 
 function base64ToArrayBuffer(base64: string): ArrayBuffer {

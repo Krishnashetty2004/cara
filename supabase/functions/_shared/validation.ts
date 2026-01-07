@@ -79,7 +79,7 @@ export function validateCharacterId(characterId: unknown): ValidationResult {
   }
 
   // Whitelist valid characters
-  const validCharacters = ['preethi', 'ira']
+  const validCharacters = ['preethi', 'ira', 'riya']
   if (!validCharacters.includes(characterId)) {
     return { valid: false, error: 'Unknown character' }
   }
