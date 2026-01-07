@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react'
 import { CONFIG } from '@/constants/config'
 import { useAuth } from './useAuth'
 import { getUserMemory, processAndSaveFacts } from '@/lib/memory/userMemory'
+import { getFreeMinutesData, incrementFreeMinutesUsed as persistMinutesUsed } from '@/lib/storage'
 import {
   getRelationship,
   updateRelationshipAfterCall,
@@ -22,7 +23,7 @@ import type { DbSubscription } from '@/types/razorpay'
 import type { CharacterId } from '@/types/character'
 
 interface UseUserReturn {
-  user: { id: string; name: string | null; email: string | null } | null
+  user: { id: string; clerkId: string; name: string | null; email: string | null } | null
   isLoading: boolean
   error: string | null
   isPremium: boolean
@@ -44,6 +45,7 @@ export function useUser(): UseUserReturn {
   const { user: authUser, isLoading: authLoading } = useAuth()
 
   const [dailyMinutesUsed, setDailyMinutesUsed] = useState(0)
+  const [isMinutesLoading, setIsMinutesLoading] = useState(true)
   const [memory, setMemory] = useState<UserMemory | null>(null)
   const [relationship, setRelationship] = useState<RelationshipData | null>(null)
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
@@ -60,6 +62,21 @@ export function useUser(): UseUserReturn {
   }, [subscription, authUser?.isPremium])
 
   const remainingMinutes = Math.max(0, CONFIG.FREE_DAILY_MINUTES - dailyMinutesUsed)
+
+  // Load persisted free minutes on mount
+  useEffect(() => {
+    async function loadMinutes() {
+      try {
+        const data = await getFreeMinutesData()
+        setDailyMinutesUsed(data.minutesUsed)
+      } catch (error) {
+        console.error('[useUser] Error loading free minutes:', error)
+      } finally {
+        setIsMinutesLoading(false)
+      }
+    }
+    loadMinutes()
+  }, [])
 
   // Load user context (memory + relationship) before a call
   const loadUserContext = useCallback(async () => {
@@ -181,8 +198,13 @@ export function useUser(): UseUserReturn {
     return remainingMinutes > 0
   }, [isPremium, remainingMinutes])
 
-  const incrementMinutesUsed = useCallback((minutes: number = 1) => {
+  const incrementMinutesUsed = useCallback(async (minutes: number = 1) => {
     setDailyMinutesUsed((prev) => prev + minutes)
+    try {
+      await persistMinutesUsed(minutes)
+    } catch (error) {
+      console.error('[useUser] Error persisting minutes:', error)
+    }
   }, [])
 
   // Check and refresh subscription status from database
@@ -220,7 +242,7 @@ export function useUser(): UseUserReturn {
   }, [authUser?.id, loadUserContext, checkSubscriptionStatus])
 
   return {
-    user: authUser ? { id: authUser.id, name: authUser.name, email: authUser.email } : null,
+    user: authUser ? { id: authUser.id, clerkId: authUser.clerkId, name: authUser.name, email: authUser.email } : null,
     isLoading: authLoading,
     error: null,
     isPremium,

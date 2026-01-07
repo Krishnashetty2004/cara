@@ -1,7 +1,7 @@
 export const CONFIG = {
   // Freemium limits
-  FREE_DAILY_MINUTES: 5,
-  FREE_CALL_LIMIT_SECONDS: 300, // 5 minutes
+  FREE_DAILY_MINUTES: 30,
+  FREE_CALL_LIMIT_SECONDS: 1800, // 30 minutes
   WARNING_BEFORE_END_SECONDS: 60, // Show warning 1 minute before limit
 
   // Razorpay Subscription
@@ -19,8 +19,8 @@ export const CONFIG = {
   CALLING_RING_DURATION_MS: 2000,
   CALL_END_DELAY_MS: 1500,
 
-  // OpenAI - using mini for faster responses
-  OPENAI_MODEL: 'gpt-4o-mini',
+  // OpenAI - using GPT-4o for best quality responses
+  OPENAI_MODEL: 'gpt-4o',
   WHISPER_MODEL: 'whisper-1',
 
   // ElevenLabs - using turbo for faster TTS

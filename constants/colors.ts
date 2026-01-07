@@ -1,36 +1,40 @@
-// Brand colors from Cara website (cara.plutas.in)
+// Re-export from theme.ts for backward compatibility
+// Use @/constants/theme for new code
 
-export const colors = {
+export { colors } from './theme'
+
+// Legacy color mappings for backward compatibility
+export const legacyColors = {
   // Backgrounds
-  background: '#F5F9FC',        // Light blue-tinted white
-  backgroundPure: '#FFFFFF',    // Pure white
-  surface: '#FFFFFF',           // Cards
-  surfaceHover: '#EDF2F7',      // Pressed state
+  background: '#E8F1FA',
+  backgroundPure: '#FFFFFF',
+  surface: '#FFFFFF',
+  surfaceHover: '#F5F9FC',
 
   // Primary
-  primary: '#4A90D9',           // Blue accent
-  primaryLight: '#D4E5F7',      // Light blue blobs
-  primaryDark: '#3182CE',       // Darker blue
+  primary: '#4A8FD4',
+  primaryLight: '#7AB4E8',
+  primaryDark: '#2B5A87',
 
   // Accent
-  accent: '#E8927C',            // Coral/salmon (from tagline)
-  accentLight: '#FED7D7',       // Light coral
+  accent: '#5BA3E0',
+  accentLight: '#D4E5F7',
 
   // Text
-  textPrimary: '#1a1a2e',       // Dark navy for headlines
-  textSecondary: '#2D3748',     // Body text
-  textMuted: '#718096',         // Muted/placeholder
-  textLight: '#A0AEC0',         // Very light text
+  textPrimary: '#1E3A5F',
+  textSecondary: '#3D5A7A',
+  textMuted: '#6B8CAE',
+  textLight: '#9BB3CC',
 
   // Semantic
-  success: '#48BB78',
-  error: '#F56565',
-  warning: '#ED8936',
+  success: '#4CAF7A',
+  error: '#E05A5A',
+  warning: '#E8A035',
 
   // Borders
-  border: '#E2E8F0',
-  borderLight: '#EDF2F7',
+  border: '#D4E3F2',
+  borderLight: '#E8F1FA',
 
   // Avatar
-  avatarBg: '#14B8A6',          // Teal for avatar
+  avatarBg: '#4A8FD4',
 }

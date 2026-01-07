@@ -5,7 +5,9 @@ export default function PaywallLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        presentation: 'modal',
+        presentation: 'transparentModal',
+        animation: 'fade_from_bottom',
+        animationDuration: 300,
       }}
     >
       <Stack.Screen name="premium" />

@@ -1,459 +1,302 @@
-import { View, Text, Image, Pressable, Animated, StyleSheet, Dimensions } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
-import { useEffect, useRef, useState } from 'react'
-import { Settings, Phone } from 'lucide-react-native'
-import { LinearGradient } from 'expo-linear-gradient'
-import { useUser } from '@/hooks/useUser'
-import { CHARACTER_LIST } from '@/constants/characters'
-import type { CharacterId } from '@/types/character'
+// app/(main)/home.tsx
+// Home screen with real user data
 
-const { width, height } = Dimensions.get('window')
-const SPLASH_BG = require('@/assets/images/splashs.jpeg')
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
+  Image,
+  ScrollView,
+  Dimensions,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useUser as useAppUser } from '@/hooks/useUser';
+
+const { width } = Dimensions.get('window');
+
+// Character data
+const characters = [
+  {
+    id: 'preethi',
+    name: 'Preethi',
+    tagline: 'Your flirty friend',
+    image: require('@/assets/images/preethi.jpg'),
+    available: true,
+  },
+  {
+    id: 'ira',
+    name: 'Ira',
+    tagline: 'Your calm confidant',
+    image: require('@/assets/images/ira.jpg'),
+    available: true,
+  },
+];
 
 export default function HomeScreen() {
-  const insets = useSafeAreaInsets()
-  const { isPremium, remainingMinutes, canMakeCall } = useUser()
-  const [selectedCharacter, setSelectedCharacter] = useState<CharacterId>('preethi')
+  const router = useRouter();
+  const [selectedCharacter, setSelectedCharacter] = useState(characters[0]);
+  const { isPremium, remainingMinutes, canMakeCall } = useAppUser();
 
-  const selectedCharacterConfig = CHARACTER_LIST.find(c => c.id === selectedCharacter)!
+  // Real minutes from hook
+  const minutesRemaining = isPremium ? Infinity : remainingMinutes;
 
-  // Pulsing ring animation for selected character
-  const pulseAnim = useRef(new Animated.Value(1)).current
-  const pulseOpacity = useRef(new Animated.Value(0.5)).current
-
-  // Call button pulse animation
-  const callPulse1 = useRef(new Animated.Value(1)).current
-  const callOpacity1 = useRef(new Animated.Value(0.4)).current
-  const callPulse2 = useRef(new Animated.Value(1)).current
-  const callOpacity2 = useRef(new Animated.Value(0.2)).current
-
-  useEffect(() => {
-    // Character pulse animation
-    Animated.loop(
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(pulseAnim, {
-            toValue: 1.15,
-            duration: 1500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseOpacity, {
-            toValue: 0,
-            duration: 1500,
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.parallel([
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 0,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseOpacity, {
-            toValue: 0.5,
-            duration: 0,
-            useNativeDriver: true,
-          }),
-        ]),
-      ])
-    ).start()
-
-    // Call button pulse 1
-    Animated.loop(
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(callPulse1, {
-            toValue: 1.5,
-            duration: 1200,
-            useNativeDriver: true,
-          }),
-          Animated.timing(callOpacity1, {
-            toValue: 0,
-            duration: 1200,
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.parallel([
-          Animated.timing(callPulse1, {
-            toValue: 1,
-            duration: 0,
-            useNativeDriver: true,
-          }),
-          Animated.timing(callOpacity1, {
-            toValue: 0.4,
-            duration: 0,
-            useNativeDriver: true,
-          }),
-        ]),
-      ])
-    ).start()
-
-    // Call button pulse 2 (delayed)
-    setTimeout(() => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.parallel([
-            Animated.timing(callPulse2, {
-              toValue: 1.8,
-              duration: 1200,
-              useNativeDriver: true,
-            }),
-            Animated.timing(callOpacity2, {
-              toValue: 0,
-              duration: 1200,
-              useNativeDriver: true,
-            }),
-          ]),
-          Animated.parallel([
-            Animated.timing(callPulse2, {
-              toValue: 1,
-              duration: 0,
-              useNativeDriver: true,
-            }),
-            Animated.timing(callOpacity2, {
-              toValue: 0.2,
-              duration: 0,
-              useNativeDriver: true,
-            }),
-          ]),
-        ])
-      ).start()
-    }, 400)
-  }, [])
-
-  const handleCall = () => {
-    if (!canMakeCall()) {
-      alert('No minutes remaining!')
-      return
+  const handleStartCall = () => {
+    if (canMakeCall()) {
+      router.push({
+        pathname: '/(main)/call',
+        params: { characterId: selectedCharacter.id },
+      });
+    } else {
+      router.push('/(paywall)/premium');
     }
-    router.push({ pathname: '/(main)/call', params: { characterId: selectedCharacter } })
-  }
+  };
+
+  const handleOpenSettings = () => {
+    router.push('/(main)/settings');
+  };
 
   return (
-    <View style={styles.container}>
-      {/* Background Image */}
-      <Image
-        source={SPLASH_BG}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      />
-
-      {/* Gradient Overlay */}
-      <LinearGradient
-        colors={[
-          'rgba(10, 22, 40, 0.85)',
-          'rgba(10, 22, 40, 0.7)',
-          'rgba(10, 22, 40, 0.75)',
-          'rgba(10, 22, 40, 0.9)',
-        ]}
-        locations={[0, 0.3, 0.6, 1]}
-        style={styles.gradientOverlay}
-      />
-
-      {/* Content */}
-      <View style={[styles.content, { paddingTop: insets.top }]}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>cara</Text>
-          <Pressable
-            onPress={() => router.push('/(main)/settings')}
-            style={({ pressed }) => [
-              styles.settingsButton,
-              { opacity: pressed ? 0.6 : 1 },
-            ]}
-          >
-            <Settings color="rgba(255,255,255,0.8)" size={24} />
-          </Pressable>
-        </View>
-
-        {/* Main Content */}
-        <View style={styles.mainContent}>
-          {/* Label */}
-          <Text style={styles.selectLabel}>Choose your companion</Text>
-
-          {/* Character Selection */}
-          <View style={styles.characterGrid}>
-            {CHARACTER_LIST.map((character) => {
-              const isSelected = character.id === selectedCharacter
-              return (
-                <Pressable
-                  key={character.id}
-                  onPress={() => setSelectedCharacter(character.id)}
-                  style={({ pressed }) => [
-                    styles.characterItem,
-                    { opacity: pressed ? 0.8 : 1 },
-                  ]}
-                >
-                  <View style={styles.avatarContainer}>
-                    {/* Pulsing ring - only for selected */}
-                    {isSelected && (
-                      <Animated.View
-                        style={[
-                          styles.pulseRing,
-                          {
-                            transform: [{ scale: pulseAnim }],
-                            opacity: pulseOpacity,
-                          },
-                        ]}
-                      />
-                    )}
-
-                    {/* Avatar */}
-                    <View
-                      style={[
-                        styles.avatar,
-                        {
-                          borderColor: isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.3)',
-                          borderWidth: isSelected ? 3 : 2,
-                        },
-                      ]}
-                    >
-                      <Image
-                        source={character.avatarImage}
-                        style={[styles.avatarImage, { opacity: isSelected ? 1 : 0.5 }]}
-                        resizeMode="cover"
-                      />
-                    </View>
-                  </View>
-
-                  {/* Name */}
-                  <Text
-                    style={[
-                      styles.characterName,
-                      {
-                        color: isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
-                        fontFamily: isSelected ? 'Inter_600SemiBold' : 'Inter_400Regular',
-                      },
-                    ]}
-                  >
-                    {character.name}
-                  </Text>
-                </Pressable>
-              )
-            })}
-          </View>
-
-          {/* Selected character info */}
-          <View style={styles.selectedInfo}>
-            <Text style={styles.selectedName}>{selectedCharacterConfig.name}</Text>
-            <Text style={styles.selectedTagline}>{selectedCharacterConfig.tagline}</Text>
-          </View>
-
-          {/* Call Button */}
-          <View style={styles.callButtonContainer}>
-            {/* Pulse ring 2 */}
-            <Animated.View
-              style={[
-                styles.callPulseRing,
-                {
-                  transform: [{ scale: callPulse2 }],
-                  opacity: callOpacity2,
-                },
-              ]}
-            />
-            {/* Pulse ring 1 */}
-            <Animated.View
-              style={[
-                styles.callPulseRing,
-                {
-                  transform: [{ scale: callPulse1 }],
-                  opacity: callOpacity1,
-                },
-              ]}
-            />
-            {/* Button */}
-            <Pressable
-              onPress={handleCall}
-              disabled={!canMakeCall()}
-              style={({ pressed }) => [
-                styles.callButton,
-                {
-                  opacity: pressed || !canMakeCall() ? 0.8 : 1,
-                  transform: [{ scale: pressed ? 0.95 : 1 }],
-                },
-              ]}
-            >
-              <LinearGradient
-                colors={['#60A5FA', '#3B82F6']}
-                style={styles.callButtonGradient}
-              >
-                <Phone color="#FFFFFF" size={32} />
-              </LinearGradient>
-            </Pressable>
-          </View>
-
-          {/* Minutes remaining */}
-          {!isPremium && (
-            <Pressable
-              onPress={() => router.push('/(paywall)/premium')}
-              style={({ pressed }) => [
-                styles.minutesContainer,
-                { opacity: pressed ? 0.8 : 1 },
-              ]}
-            >
-              <Text style={styles.minutesText}>
-                {remainingMinutes} mins remaining
-              </Text>
-              <Text style={styles.upgradeText}>Tap to upgrade</Text>
-            </Pressable>
-          )}
-        </View>
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.logo}>cara</Text>
+        <TouchableOpacity onPress={handleOpenSettings} style={styles.settingsButton}>
+          <Ionicons name="settings-outline" size={24} color="#666" />
+        </TouchableOpacity>
       </View>
-    </View>
-  )
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Character Selector */}
+        <View style={styles.selectorSection}>
+          <Text style={styles.sectionLabel}>CHOOSE YOUR COMPANION</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.characterScroll}
+          >
+            {characters.map((char) => (
+              <TouchableOpacity
+                key={char.id}
+                style={styles.characterThumb}
+                onPress={() => char.available && setSelectedCharacter(char)}
+                activeOpacity={char.available ? 0.7 : 1}
+              >
+                <View style={[
+                  styles.thumbPlaceholder,
+                  selectedCharacter.id === char.id && styles.thumbSelected,
+                ]}>
+                  {char.image ? (
+                    <Image source={char.image} style={styles.thumbImage} />
+                  ) : (
+                    <View style={styles.thumbEmpty} />
+                  )}
+                  {!char.available && (
+                    <View style={styles.soonBadge}>
+                      <Text style={styles.soonText}>Soon</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={[
+                  styles.thumbName,
+                  selectedCharacter.id === char.id && styles.thumbNameSelected,
+                ]}>{char.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Main Character Card */}
+        <View style={styles.mainCard}>
+          <Image
+            source={selectedCharacter.image || require('@/assets/images/preethi.jpg')}
+            style={styles.mainImage}
+            resizeMode="cover"
+          />
+          <View style={styles.cardOverlay}>
+            <Text style={styles.characterName}>{selectedCharacter.name}</Text>
+            <Text style={styles.characterTagline}>{selectedCharacter.tagline}</Text>
+          </View>
+        </View>
+
+        {/* Minutes Badge */}
+        <View style={styles.minutesBadge}>
+          <Text style={styles.minutesText}>
+            {isPremium ? 'Unlimited calls' : `${minutesRemaining} minutes remaining`}
+          </Text>
+        </View>
+
+        {/* Start Call Button - ROUNDED, NO ICON */}
+        <TouchableOpacity
+          style={[
+            styles.callButton,
+            !canMakeCall() && styles.callButtonDisabled,
+          ]}
+          onPress={handleStartCall}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.callButtonText}>Start Call</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a1628',
-  },
-  backgroundImage: {
-    position: 'absolute',
-    width: width,
-    height: height,
-  },
-  gradientOverlay: {
-    position: 'absolute',
-    width: width,
-    height: height,
-  },
-  content: {
-    flex: 1,
+    backgroundColor: '#F5F8FB',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 16,
+    paddingVertical: 16,
   },
-  headerTitle: {
-    fontSize: 32,
-    color: '#FFFFFF',
-    fontFamily: 'PlayfairDisplay_700Bold',
-    letterSpacing: -1,
+  logo: {
+    fontSize: 32,  // BIGGER
+    fontFamily: 'PlayfairDisplay-Bold',
+    color: '#4A8FD4',
+    letterSpacing: 1,
   },
   settingsButton: {
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 8,
   },
-  mainContent: {
+  scrollView: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
     paddingBottom: 40,
   },
-  selectLabel: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.5)',
+  selectorSection: {
     marginBottom: 24,
-    fontFamily: 'Inter_500Medium',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
   },
-  characterGrid: {
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#888',
+    letterSpacing: 1,
+    marginBottom: 16,
+  },
+  characterScroll: {
     flexDirection: 'row',
-    gap: 40,
-    marginBottom: 32,
   },
-  characterItem: {
+  characterThumb: {
+    marginRight: 20,
     alignItems: 'center',
   },
-  avatarContainer: {
-    width: 120,
-    height: 120,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pulseRing: {
-    position: 'absolute',
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  thumbPlaceholder: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     overflow: 'hidden',
+    backgroundColor: '#E0E0E0',
+    borderWidth: 3,
+    borderColor: 'transparent',
   },
-  avatarImage: {
+  thumbSelected: {
+    borderColor: '#4A8FD4',
+  },
+  thumbImage: {
     width: '100%',
     height: '100%',
   },
-  characterName: {
-    fontSize: 15,
-    marginTop: 12,
-    letterSpacing: 0.3,
+  thumbEmpty: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#D0D0D0',
   },
-  selectedInfo: {
-    alignItems: 'center',
-    marginBottom: 40,
+  thumbName: {
+    marginTop: 8,
+    fontSize: 13,
+    color: '#888',
+    fontWeight: '500',
   },
-  selectedName: {
-    fontSize: 42,
-    color: '#FFFFFF',
-    fontFamily: 'PlayfairDisplay_700Bold',
-    marginBottom: 8,
-    letterSpacing: -1,
+  thumbNameSelected: {
+    color: '#4A8FD4',
+    fontWeight: '600',
   },
-  selectedTagline: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontFamily: 'Inter_400Regular',
-  },
-  callButtonContainer: {
-    width: 100,
-    height: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  callPulseRing: {
+  soonBadge: {
     position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#3B82F6',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingVertical: 4,
   },
-  callButton: {
-    shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 10,
+  soonText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
+    textAlign: 'center',
   },
-  callButtonGradient: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  mainCard: {
+    width: '100%',
+    height: width * 1.1,
+    borderRadius: 24,
+    overflow: 'hidden',
+    backgroundColor: '#2B5A87',
+    marginBottom: 24,
+  },
+  mainImage: {
+    width: '100%',
+    height: '100%',
+  },
+  cardOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 24,
+    paddingTop: 48,
+    backgroundColor: 'rgba(43,90,135,0.85)',
+  },
+  characterName: {
+    fontSize: 32,
+    fontFamily: 'PlayfairDisplay-Bold',
+    color: 'white',
+    marginBottom: 4,
+  },
+  characterTagline: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  minutesBadge: {
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  minutesContainer: {
-    marginTop: 32,
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    marginBottom: 16,
   },
   minutesText: {
-    fontSize: 15,
-    color: '#FFFFFF',
-    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    color: '#888',
   },
-  upgradeText: {
-    fontSize: 13,
-    color: '#60A5FA',
-    fontFamily: 'Inter_400Regular',
-    marginTop: 4,
+  callButton: {
+    backgroundColor: '#4A8FD4',
+    height: 56,
+    borderRadius: 50,  // FULLY ROUNDED
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#4A8FD4',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
-})
+  callButtonDisabled: {
+    backgroundColor: '#B0C4DE',
+    shadowOpacity: 0,
+  },
+  callButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: 'white',
+  },
+});

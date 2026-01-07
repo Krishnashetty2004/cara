@@ -1,58 +1,85 @@
-// Create Razorpay Subscription
-// Deploy with: supabase functions deploy create-subscription
+/**
+ * Create Razorpay Subscription
+ *
+ * Creates a new subscription for the authenticated user.
+ * Security: Uses JWT auth - user can only create subscriptions for themselves.
+ *
+ * Deploy with: supabase functions deploy create-subscription
+ */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { requireAuth, getAdminClient } from '../_shared/auth.ts'
+import { PERMISSIVE_CORS_HEADERS } from '../_shared/cors.ts'
 
 const RAZORPAY_KEY_ID = Deno.env.get('RAZORPAY_KEY_ID')!
 const RAZORPAY_KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET')!
 const RAZORPAY_PLAN_ID = Deno.env.get('RAZORPAY_PLAN_ID')!
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
 serve(async (req: Request) => {
-  // CORS headers
+  const corsHeaders = PERMISSIVE_CORS_HEADERS
+
+  // CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      },
-    })
+    return new Response(null, { headers: corsHeaders })
+  }
+
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
 
   try {
-    const { user_id } = await req.json()
-
-    if (!user_id) {
-      return new Response(
-        JSON.stringify({ error: 'user_id is required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      )
+    // Authenticate request via JWT
+    const { auth, response: authResponse } = await requireAuth(req, corsHeaders)
+    if (authResponse) {
+      return authResponse
     }
 
-    // Get user details from Supabase
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-    const { data: user, error: userError } = await supabase
+    const { userId, clerkId } = auth
+
+    // Use service role client
+    const adminClient = getAdminClient()
+
+    // Get user details from database
+    const { data: user, error: userError } = await adminClient
       .from('users')
-      .select('*')
-      .eq('id', user_id)
+      .select('id, email, name')
+      .eq('id', userId)
       .single()
 
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'User not found' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    // Check if user already has an active subscription
+    const { data: existingSub } = await adminClient
+      .from('subscriptions')
+      .select('id, status')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .single()
+
+    if (existingSub) {
+      return new Response(
+        JSON.stringify({ error: 'User already has an active subscription' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log(`[create-subscription] Creating subscription for user`)
+
     // Create subscription on Razorpay
-    const auth = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`)
-    
+    const auth64 = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`)
+
     const razorpayResponse = await fetch('https://api.razorpay.com/v1/subscriptions', {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${auth}`,
+        'Authorization': `Basic ${auth64}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -61,7 +88,8 @@ serve(async (req: Request) => {
         quantity: 1,
         total_count: 52, // 52 weeks = 1 year
         notes: {
-          user_id: user_id,
+          user_id: userId, // Internal database UUID
+          clerk_id: clerkId, // Clerk ID for verification
           email: user.email || '',
         },
       }),
@@ -69,31 +97,37 @@ serve(async (req: Request) => {
 
     if (!razorpayResponse.ok) {
       const errorText = await razorpayResponse.text()
-      console.error('[CreateSubscription] Razorpay error:', errorText)
+      console.error('[create-subscription] Razorpay error:', razorpayResponse.status)
       return new Response(
-        JSON.stringify({ error: 'Failed to create subscription', details: errorText }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Failed to create subscription' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     const subscription = await razorpayResponse.json()
 
     // Save subscription to database
-    const { error: dbError } = await supabase
+    const { error: dbError } = await adminClient
       .from('subscriptions')
       .insert({
-        user_id: user_id,
+        user_id: userId,
         razorpay_subscription_id: subscription.id,
         razorpay_customer_id: subscription.customer_id || null,
         plan_id: subscription.plan_id,
         status: subscription.status,
-        current_period_start: subscription.current_start ? new Date(subscription.current_start * 1000).toISOString() : null,
-        current_period_end: subscription.current_end ? new Date(subscription.current_end * 1000).toISOString() : null,
+        current_period_start: subscription.current_start
+          ? new Date(subscription.current_start * 1000).toISOString()
+          : null,
+        current_period_end: subscription.current_end
+          ? new Date(subscription.current_end * 1000).toISOString()
+          : null,
       })
 
     if (dbError) {
-      console.error('[CreateSubscription] Database error:', dbError)
+      console.error('[create-subscription] Database error')
     }
+
+    console.log(`[create-subscription] Subscription created: ${subscription.id}`)
 
     return new Response(
       JSON.stringify({
@@ -101,19 +135,13 @@ serve(async (req: Request) => {
         status: subscription.status,
         short_url: subscription.short_url,
       }),
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
-  } catch (error: any) {
-    console.error('[CreateSubscription] Error:', error)
+  } catch (error) {
+    console.error('[create-subscription] Error')
     return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })
-

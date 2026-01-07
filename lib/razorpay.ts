@@ -3,7 +3,7 @@
 
 import { Linking, Platform } from 'react-native'
 import { CONFIG } from '@/constants/config'
-import { supabase } from '@/lib/supabase'
+import { supabase, createAuthenticatedInvoker } from '@/lib/supabase'
 import type {
   RazorpayCheckoutOptions,
   RazorpaySuccessResponse,
@@ -14,11 +14,16 @@ const RAZORPAY_KEY_ID = CONFIG.RAZORPAY_KEY_ID
 const RAZORPAY_PLAN_ID = CONFIG.RAZORPAY_PLAN_ID
 
 // Create a subscription via Supabase Edge Function
-export async function createSubscription(userId: string): Promise<string | null> {
+export async function createSubscription(
+  getToken: () => Promise<string | null>
+): Promise<string | null> {
   try {
+    const authenticatedInvoke = createAuthenticatedInvoker(getToken)
+
     // Call edge function to create subscription on Razorpay
-    const { data, error } = await supabase.functions.invoke('create-subscription', {
-      body: { user_id: userId },
+    // User ID is extracted from JWT token by Edge Function
+    const { data, error } = await authenticatedInvoke('create-subscription', {
+      method: 'POST',
     })
 
     if (error) {
@@ -26,7 +31,7 @@ export async function createSubscription(userId: string): Promise<string | null>
       return null
     }
 
-    return data.subscription_id
+    return (data as { subscription_id?: string })?.subscription_id || null
   } catch (error) {
     console.error('[Razorpay] Create subscription error:', error)
     return null
@@ -37,7 +42,8 @@ export async function createSubscription(userId: string): Promise<string | null>
 // For Expo managed workflow, we use browser-based checkout
 export async function openCheckout(
   subscriptionId: string,
-  user: { id: string; email?: string | null; name?: string | null }
+  user: { id: string; email?: string | null; name?: string | null },
+  getToken?: () => Promise<string | null>
 ): Promise<RazorpaySuccessResponse | null> {
   return new Promise((resolve) => {
     if (Platform.OS === 'web') {
@@ -46,7 +52,7 @@ export async function openCheckout(
     } else {
       // For Expo Go / managed workflow, use browser checkout
       // Native module requires a development build
-      openBrowserCheckout(subscriptionId, resolve)
+      openBrowserCheckout(subscriptionId, resolve, getToken)
     }
   })
 }
@@ -137,22 +143,31 @@ async function openNativeCheckout(
 // Fallback: Open Razorpay short URL in browser
 async function openBrowserCheckout(
   subscriptionId: string,
-  resolve: (value: RazorpaySuccessResponse | null) => void
+  resolve: (value: RazorpaySuccessResponse | null) => void,
+  getToken?: () => Promise<string | null>
 ) {
   try {
+    if (!getToken) {
+      console.error('[Razorpay] Cannot get subscription URL - missing getToken')
+      resolve(null)
+      return
+    }
+
+    const authenticatedInvoke = createAuthenticatedInvoker(getToken)
+    
     // Get the subscription short URL from our backend
-    const { data, error } = await supabase.functions.invoke('get-subscription-url', {
+    const { data, error } = await authenticatedInvoke('get-subscription-url', {
       body: { subscription_id: subscriptionId },
     })
 
-    if (error || !data?.short_url) {
+    if (error || !(data as { short_url?: string })?.short_url) {
       console.error('[Razorpay] Could not get subscription URL')
       resolve(null)
       return
     }
 
     // Open in browser
-    await Linking.openURL(data.short_url)
+    await Linking.openURL((data as { short_url: string }).short_url)
 
     // Since we can't get the response directly, we'll rely on webhook
     // Return null and let the webhook update the status
@@ -167,10 +182,13 @@ async function openBrowserCheckout(
 export async function verifyPayment(
   paymentId: string,
   subscriptionId: string,
-  signature: string
+  signature: string,
+  getToken: () => Promise<string | null>
 ): Promise<boolean> {
   try {
-    const { data, error } = await supabase.functions.invoke('verify-payment', {
+    const authenticatedInvoke = createAuthenticatedInvoker(getToken)
+    
+    const { data, error } = await authenticatedInvoke('verify-payment', {
       body: {
         razorpay_payment_id: paymentId,
         razorpay_subscription_id: subscriptionId,
@@ -183,7 +201,7 @@ export async function verifyPayment(
       return false
     }
 
-    return data.verified === true
+    return (data as { verified?: boolean })?.verified === true
   } catch (error) {
     console.error('[Razorpay] Verify payment error:', error)
     return false
@@ -237,9 +255,14 @@ export function isSubscriptionValid(subscription: DbSubscription | null): boolea
 }
 
 // Cancel subscription
-export async function cancelSubscription(subscriptionId: string): Promise<boolean> {
+export async function cancelSubscription(
+  subscriptionId: string,
+  getToken: () => Promise<string | null>
+): Promise<boolean> {
   try {
-    const { data, error } = await supabase.functions.invoke('cancel-subscription', {
+    const authenticatedInvoke = createAuthenticatedInvoker(getToken)
+    
+    const { data, error } = await authenticatedInvoke('cancel-subscription', {
       body: { subscription_id: subscriptionId },
     })
 
@@ -248,7 +271,7 @@ export async function cancelSubscription(subscriptionId: string): Promise<boolea
       return false
     }
 
-    return data.cancelled === true
+    return (data as { cancelled?: boolean })?.cancelled === true
   } catch (error) {
     console.error('[Razorpay] Cancel subscription error:', error)
     return false

@@ -29,6 +29,12 @@ function AuthRedirect({ children }: { children: React.ReactNode }) {
     async function checkAuthAndRedirect() {
       if (!isLoaded) return // Wait for Clerk to load
 
+      // Auth is now enabled for production
+      const BYPASS_AUTH = false
+      if (BYPASS_AUTH) {
+        return // Don't redirect anywhere
+      }
+
       try {
         // Check real auth state with getToken()
         const token = await getToken()
@@ -71,8 +77,8 @@ export default function RootLayout() {
 
   if (!fontsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0a1628' }}>
-        <ActivityIndicator size="large" color="#3B82F6" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F2F3F4' }}>
+        <ActivityIndicator size="large" color="#A77693" />
       </View>
     )
   }
@@ -83,11 +89,23 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <AuthRedirect>
             <StatusBar style="light" />
-            <Stack screenOptions={{ headerShown: false }}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: 'fade',
+                animationDuration: 200,
+              }}
+            >
               <Stack.Screen name="index" />
               <Stack.Screen name="(auth)" />
               <Stack.Screen name="(main)" />
-              <Stack.Screen name="(paywall)" />
+              <Stack.Screen
+                name="(paywall)"
+                options={{
+                  presentation: 'transparentModal',
+                  animation: 'fade_from_bottom',
+                }}
+              />
             </Stack>
           </AuthRedirect>
         </SafeAreaProvider>

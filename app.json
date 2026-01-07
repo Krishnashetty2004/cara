@@ -4,14 +4,14 @@
     "slug": "cara",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/cara-logo.png",
     "scheme": "cara",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/Cara Logo.png",
+      "image": "./assets/images/cara-splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0a1628"
+      "backgroundColor": "#F2F3F4"
     },
     "ios": {
       "supportsTablet": false,
@@ -22,15 +22,16 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#0F172A"
+        "foregroundImage": "./assets/images/cara-logo.png",
+        "backgroundColor": "#0F2D4D"
       },
       "package": "com.plutaslab.cara",
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
-        "android.permission.SCHEDULE_EXACT_ALARM"
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
       "edgeToEdgeEnabled": true
     },
@@ -51,8 +52,8 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/icon.png",
-          "color": "#60A5FA",
+          "icon": "./assets/images/cara-logo.png",
+          "color": "#A77693",
           "defaultChannel": "default"
         }
       ]
@@ -65,7 +66,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "4db68857-a150-4aac-90a7-429b9779f1d1"
       }
     }
   }

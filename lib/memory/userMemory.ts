@@ -174,18 +174,29 @@ export async function extractFacts(
             content: `You are a fact extractor. Extract personal facts about the user from this conversation.
 
 Return a JSON array of facts. Each fact should have:
-- key: one of [name, nickname, job, city, relationship_status, age, interests, favorite_food, favorite_movie, favorite_music, friends, family, pet, college, hometown]
+- key: one of [name, nickname, gender, job, city, relationship_status, age, interests, favorite_food, favorite_movie, favorite_music, friends, family, pet, college, hometown]
 - value: the extracted value (string)
 - confidence: how sure you are (0.0 to 1.0)
 
-Only extract facts that are clearly stated. If the user says "main Rahul hoon" or "my name is Rahul", extract {key: "name", value: "Rahul", confidence: 1.0}.
+GENDER DETECTION (IMPORTANT):
+- gender can ONLY be "male" or "female"
+- Detect from: pronouns, names, relationship terms (girlfriend/boyfriend/wife/husband), Hindi gender markers
+- "Meri girlfriend" = user is male, "Mera boyfriend" = user is female
+- Indian male names: Rahul, Arjun, Karthik, Vikram, Rohit, Aditya, etc = male
+- Indian female names: Priya, Anjali, Sneha, Pooja, Neha, Kavya, etc = female
+- "Main ladka hoon" = male, "Main ladki hoon" = female
+- "Bhai" when referring to self = male, "Didi" = female
+
+Only extract facts that are clearly stated. If the user says "main Rahul hoon" or "my name is Rahul", extract BOTH name AND gender.
 
 If no facts can be extracted, return an empty array [].
 
 Examples:
-- "Main Bangalore mein rehta hoon" -> [{key: "city", value: "Bangalore", confidence: 1.0}]
-- "Office mein busy tha" -> [{key: "job", value: "office worker", confidence: 0.6}]
-- "Meri girlfriend ne breakup kar diya" -> [{key: "relationship_status", value: "single", confidence: 0.8}]`,
+- "Main Rahul hoon" -> [{key: "name", value: "Rahul", confidence: 1.0}, {key: "gender", value: "male", confidence: 0.9}]
+- "Meri girlfriend ne breakup kar diya" -> [{key: "relationship_status", value: "single", confidence: 0.8}, {key: "gender", value: "male", confidence: 0.95}]
+- "My boyfriend is annoying" -> [{key: "gender", value: "female", confidence: 0.95}]
+- "Main Bangalore mein rehta hoon" -> [{key: "city", value: "Bangalore", confidence: 1.0}, {key: "gender", value: "male", confidence: 0.7}]
+- "Main Bangalore mein rehti hoon" -> [{key: "city", value: "Bangalore", confidence: 1.0}, {key: "gender", value: "female", confidence: 0.9}]`,
           },
           {
             role: 'user',

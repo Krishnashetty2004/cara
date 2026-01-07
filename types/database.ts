@@ -66,10 +66,11 @@ export type RelationshipStage =
   | 'flirty'
   | 'romantic'
 
-// Memory keys that Preethi can learn about the user
+// Memory keys that characters can learn about the user
 export type MemoryKey =
   | 'name'
   | 'nickname'
+  | 'gender'
   | 'job'
   | 'city'
   | 'relationship_status'
@@ -84,10 +85,14 @@ export type MemoryKey =
   | 'college'
   | 'hometown'
 
+// Gender type for user identification
+export type UserGender = 'male' | 'female'
+
 // Parsed user memory for prompts
 export interface UserMemory {
   name?: string
   nickname?: string
+  gender?: UserGender
   job?: string
   city?: string
   relationship_status?: string

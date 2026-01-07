@@ -1,5 +1,15 @@
-// Razorpay Webhook Handler for Supabase Edge Functions
-// Deploy with: supabase functions deploy razorpay-webhook
+/**
+ * Razorpay Webhook Handler for Supabase Edge Functions
+ *
+ * Handles subscription lifecycle events from Razorpay.
+ * Security:
+ * - Validates HMAC signature
+ * - Implements idempotency to prevent duplicate processing
+ * - Cross-references user_id with database records
+ * - Logs all changes for audit trail
+ *
+ * Deploy with: supabase functions deploy razorpay-webhook
+ */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -39,6 +49,90 @@ interface RazorpayWebhookPayload {
   created_at: number
 }
 
+/**
+ * Log audit event for tracking
+ */
+async function logAuditEvent(
+  supabase: ReturnType<typeof createClient>,
+  eventType: string,
+  userId: string | null,
+  details: Record<string, unknown>
+) {
+  try {
+    // For now, just console log. In production, you might want a dedicated audit table
+    console.log(`[AUDIT] ${eventType}:`, JSON.stringify({
+      user_id: userId ? 'redacted' : null,
+      timestamp: new Date().toISOString(),
+      ...details,
+    }))
+  } catch (e) {
+    console.error('[AUDIT] Failed to log event')
+  }
+}
+
+/**
+ * Check if webhook event was already processed (idempotency)
+ */
+async function isEventProcessed(
+  supabase: ReturnType<typeof createClient>,
+  eventId: string,
+  subscriptionId: string
+): Promise<boolean> {
+  // We'll use the subscription's updated_at as a simple idempotency check
+  // A more robust solution would use a dedicated webhook_events table
+  const { data } = await supabase
+    .from('subscriptions')
+    .select('updated_at')
+    .eq('razorpay_subscription_id', subscriptionId)
+    .single()
+
+  if (!data) return false
+
+  // If updated within last 5 seconds, likely a duplicate
+  const updatedAt = new Date(data.updated_at).getTime()
+  const now = Date.now()
+  return (now - updatedAt) < 5000
+}
+
+/**
+ * Verify user exists and matches the one in subscription notes
+ */
+async function verifyUserFromSubscription(
+  supabase: ReturnType<typeof createClient>,
+  subscriptionId: string,
+  notesUserId: string
+): Promise<{ verified: boolean; userId: string | null }> {
+  // First, try to find existing subscription in our database
+  const { data: existingSub } = await supabase
+    .from('subscriptions')
+    .select('user_id')
+    .eq('razorpay_subscription_id', subscriptionId)
+    .single()
+
+  if (existingSub) {
+    // Verify the notes user_id matches our database
+    if (existingSub.user_id !== notesUserId) {
+      console.error('[webhook] User mismatch! Notes:', notesUserId, 'DB:', existingSub.user_id)
+      return { verified: false, userId: null }
+    }
+    return { verified: true, userId: existingSub.user_id }
+  }
+
+  // For new subscriptions, verify user exists in users table
+  const { data: user } = await supabase
+    .from('users')
+    .select('id')
+    .eq('id', notesUserId)
+    .single()
+
+  if (!user) {
+    console.error('[webhook] User not found:', notesUserId)
+    return { verified: false, userId: null }
+  }
+
+  return { verified: true, userId: notesUserId }
+}
+
 serve(async (req: Request) => {
   // Only accept POST
   if (req.method !== 'POST') {
@@ -51,7 +145,8 @@ serve(async (req: Request) => {
     const signature = req.headers.get('x-razorpay-signature')
 
     if (!signature) {
-      console.error('Missing webhook signature')
+      console.error('[webhook] Missing signature')
+      await logAuditEvent(null as any, 'WEBHOOK_AUTH_FAILED', null, { reason: 'missing_signature' })
       return new Response('Missing signature', { status: 401 })
     }
 
@@ -61,13 +156,14 @@ serve(async (req: Request) => {
       .digest('hex')
 
     if (signature !== expectedSignature) {
-      console.error('Invalid webhook signature')
+      console.error('[webhook] Invalid signature')
+      await logAuditEvent(null as any, 'WEBHOOK_AUTH_FAILED', null, { reason: 'invalid_signature' })
       return new Response('Invalid signature', { status: 401 })
     }
 
     // Parse payload
     const payload: RazorpayWebhookPayload = JSON.parse(body)
-    console.log(`Received webhook: ${payload.event}`)
+    console.log(`[webhook] Received: ${payload.event}`)
 
     // Initialize Supabase client with service role
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -80,10 +176,34 @@ serve(async (req: Request) => {
         if (!sub) break
 
         // Get user_id from subscription notes
-        const userId = sub.notes?.user_id
-        if (!userId) {
-          console.error('No user_id in subscription notes')
+        const notesUserId = sub.notes?.user_id
+        if (!notesUserId) {
+          console.error('[webhook] No user_id in subscription notes')
+          await logAuditEvent(supabase, 'WEBHOOK_MISSING_USER', null, {
+            subscription_id: sub.id,
+            event: payload.event,
+          })
           break
+        }
+
+        // Verify user
+        const { verified, userId } = await verifyUserFromSubscription(supabase, sub.id, notesUserId)
+        if (!verified || !userId) {
+          console.error('[webhook] User verification failed')
+          await logAuditEvent(supabase, 'WEBHOOK_USER_MISMATCH', null, {
+            subscription_id: sub.id,
+            notes_user_id: 'redacted',
+          })
+          break
+        }
+
+        // Check idempotency
+        if (await isEventProcessed(supabase, payload.event, sub.id)) {
+          console.log('[webhook] Event already processed, skipping')
+          return new Response(JSON.stringify({ received: true, skipped: true }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          })
         }
 
         // Upsert subscription record
@@ -102,7 +222,7 @@ serve(async (req: Request) => {
         )
 
         if (subError) {
-          console.error('Error upserting subscription:', subError)
+          console.error('[webhook] Error upserting subscription')
         }
 
         // Update user premium status
@@ -112,7 +232,7 @@ serve(async (req: Request) => {
           .eq('id', userId)
 
         if (userError) {
-          console.error('Error updating user premium status:', userError)
+          console.error('[webhook] Error updating user premium status')
         }
 
         // Log payment if present
@@ -131,7 +251,12 @@ serve(async (req: Request) => {
           )
         }
 
-        console.log(`Subscription activated for user ${userId}`)
+        await logAuditEvent(supabase, 'SUBSCRIPTION_ACTIVATED', userId, {
+          subscription_id: sub.id,
+          event: payload.event,
+        })
+
+        console.log(`[webhook] Subscription activated`)
         break
       }
 
@@ -150,10 +275,15 @@ serve(async (req: Request) => {
           .eq('razorpay_subscription_id', sub.id)
 
         if (error) {
-          console.error('Error updating subscription status:', error)
+          console.error('[webhook] Error updating subscription status')
         }
 
-        console.log(`Subscription ${sub.status} for ${sub.id}`)
+        await logAuditEvent(supabase, 'SUBSCRIPTION_STATUS_CHANGED', null, {
+          subscription_id: sub.id,
+          status: sub.status,
+        })
+
+        console.log(`[webhook] Subscription ${sub.status}`)
         break
       }
 
@@ -163,7 +293,7 @@ serve(async (req: Request) => {
         const sub = payload.payload.subscription?.entity
         if (!sub) break
 
-        // Update subscription status
+        // Get user from subscription
         const { data: subData, error: fetchError } = await supabase
           .from('subscriptions')
           .select('user_id')
@@ -171,8 +301,17 @@ serve(async (req: Request) => {
           .single()
 
         if (fetchError) {
-          console.error('Error fetching subscription:', fetchError)
+          console.error('[webhook] Error fetching subscription')
           break
+        }
+
+        // Check idempotency
+        if (await isEventProcessed(supabase, payload.event, sub.id)) {
+          console.log('[webhook] Event already processed, skipping')
+          return new Response(JSON.stringify({ received: true, skipped: true }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          })
         }
 
         // Update subscription
@@ -180,8 +319,7 @@ serve(async (req: Request) => {
           .from('subscriptions')
           .update({
             status: sub.status === 'cancelled' ? 'cancelled' : 'expired',
-            cancelled_at:
-              sub.status === 'cancelled' ? new Date().toISOString() : null,
+            cancelled_at: sub.status === 'cancelled' ? new Date().toISOString() : null,
             updated_at: new Date().toISOString(),
           })
           .eq('razorpay_subscription_id', sub.id)
@@ -194,7 +332,12 @@ serve(async (req: Request) => {
             .eq('id', subData.user_id)
         }
 
-        console.log(`Subscription ${sub.status} for user ${subData?.user_id}`)
+        await logAuditEvent(supabase, 'SUBSCRIPTION_ENDED', subData?.user_id || null, {
+          subscription_id: sub.id,
+          reason: sub.status,
+        })
+
+        console.log(`[webhook] Subscription ${sub.status}`)
         break
       }
 
@@ -202,13 +345,16 @@ serve(async (req: Request) => {
         const payment = payload.payload.payment?.entity
         if (!payment) break
 
-        console.log(`Payment failed: ${payment.id}`)
-        // Could send notification to user here
+        await logAuditEvent(supabase, 'PAYMENT_FAILED', null, {
+          payment_id: payment.id,
+        })
+
+        console.log(`[webhook] Payment failed`)
         break
       }
 
       default:
-        console.log(`Unhandled event: ${payload.event}`)
+        console.log(`[webhook] Unhandled event: ${payload.event}`)
     }
 
     return new Response(JSON.stringify({ received: true }), {
@@ -216,7 +362,7 @@ serve(async (req: Request) => {
       headers: { 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    console.error('Webhook error:', error)
+    console.error('[webhook] Error')
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
