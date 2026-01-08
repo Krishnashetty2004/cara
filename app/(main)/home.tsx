@@ -34,6 +34,13 @@ const characters = [
     image: require('@/assets/images/ira.jpg'),
     available: true,
   },
+  {
+    id: 'riya',
+    name: 'Riya',
+    tagline: 'Chaotic Telugu bestie',
+    image: require('@/assets/images/riya.png'),
+    available: true,
+  },
 ];
 
 export default function HomeScreen() {
