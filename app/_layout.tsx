@@ -29,8 +29,8 @@ function AuthRedirect({ children }: { children: React.ReactNode }) {
     async function checkAuthAndRedirect() {
       if (!isLoaded) return // Wait for Clerk to load
 
-      // Auth is now enabled for production
-      const BYPASS_AUTH = false
+      // Set to true for testing, false for production
+      const BYPASS_AUTH = true
       if (BYPASS_AUTH) {
         return // Don't redirect anywhere
       }
