@@ -1,0 +1,31 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8f9fa"/>
+      <stop offset="100%" style="stop-color:#e9ecef"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="640" fill="url(#bg)"/>
+
+  <!-- Subtle pattern -->
+  <g opacity="0.03">
+    <circle cx="100" cy="100" r="200" fill="#1a1a1a"/>
+    <circle cx="1180" cy="540" r="250" fill="#1a1a1a"/>
+  </g>
+
+  <!-- Main content -->
+  <text x="640" y="260" text-anchor="middle" font-family="Georgia, serif" font-size="120" font-weight="400" fill="#1a1a1a">Cara</text>
+
+  <text x="640" y="340" text-anchor="middle" font-family="Georgia, serif" font-size="32" font-style="italic" fill="#666666">Your voice AI companion</text>
+
+  <!-- Divider -->
+  <line x1="540" y1="400" x2="740" y2="400" stroke="#d0d0d0" stroke-width="1"/>
+
+  <!-- Features -->
+  <text x="640" y="470" text-anchor="middle" font-family="Georgia, serif" font-size="20" fill="#888888">Voice Conversations  ·  Persistent Memory  ·  Multiple Characters</text>
+
+  <!-- Open source badge -->
+  <text x="640" y="560" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#999999">Open Source  ·  React Native  ·  Expo</text>
+</svg>
