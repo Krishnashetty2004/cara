@@ -70,7 +70,7 @@ export function useUser(): UseUserReturn {
         const data = await getFreeMinutesData()
         setDailyMinutesUsed(data.minutesUsed)
       } catch (error) {
-        console.error('[useUser] Error loading free minutes:', error)
+        // Ignore loading error - use defaults
       } finally {
         setIsMinutesLoading(false)
       }
@@ -86,8 +86,6 @@ export function useUser(): UseUserReturn {
     }
 
     try {
-      console.log('[useUser] Loading context for user:', authUser.id)
-
       // Load all data in parallel
       const [userMemory, userRelationship, lastSummary] = await Promise.all([
         getUserMemory(authUser.id),
@@ -100,14 +98,7 @@ export function useUser(): UseUserReturn {
 
       // Set context for chat personalization
       setUserContext(userMemory, userRelationship, lastSummary)
-
-      console.log('[useUser] Context loaded:', {
-        memory: Object.keys(userMemory).length,
-        relationship: userRelationship?.relationship_stage,
-        hasLastSummary: !!lastSummary,
-      })
     } catch (error) {
-      console.error('[useUser] Load context error:', error)
       clearUserContext()
     }
   }, [authUser?.id])
@@ -119,10 +110,8 @@ export function useUser(): UseUserReturn {
     try {
       const conversationId = await createConversation(authUser.id)
       setCurrentConversationId(conversationId)
-      console.log('[useUser] Conversation started:', conversationId)
       return conversationId
     } catch (error) {
-      console.error('[useUser] Start conversation error:', error)
       return null
     }
   }, [authUser?.id])
@@ -135,7 +124,7 @@ export function useUser(): UseUserReturn {
       try {
         await logMessage(currentConversationId, role, content)
       } catch (error) {
-        console.error('[useUser] Log message error:', error)
+        // Ignore log message errors
       }
     },
     [currentConversationId]
@@ -161,9 +150,7 @@ export function useUser(): UseUserReturn {
 
             if (userMsg?.role === 'user' && assistantMsg?.role === 'assistant') {
               // Extract and save facts in background
-              processAndSaveFacts(authUser.id, characterId, userMsg.content, assistantMsg.content).catch(
-                console.error
-              )
+              processAndSaveFacts(authUser.id, characterId, userMsg.content, assistantMsg.content).catch(() => {})
             }
           }
 
@@ -184,10 +171,8 @@ export function useUser(): UseUserReturn {
 
         setCurrentConversationId(null)
         clearUserContext()
-
-        console.log('[useUser] Conversation ended, learning complete')
       } catch (error) {
-        console.error('[useUser] End conversation error:', error)
+        // End conversation error - ignore
       }
     },
     [authUser?.id]
@@ -203,7 +188,7 @@ export function useUser(): UseUserReturn {
     try {
       await persistMinutesUsed(minutes)
     } catch (error) {
-      console.error('[useUser] Error persisting minutes:', error)
+      // Persist error - ignore
     }
   }, [])
 
@@ -217,9 +202,7 @@ export function useUser(): UseUserReturn {
     try {
       const sub = await getActiveSubscription(authUser.id)
       setSubscription(sub)
-      console.log('[useUser] Subscription status:', sub?.status || 'none')
     } catch (error) {
-      console.error('[useUser] Check subscription error:', error)
       setSubscription(null)
     }
   }, [authUser?.id])

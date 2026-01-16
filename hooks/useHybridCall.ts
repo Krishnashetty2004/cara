@@ -135,7 +135,7 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
       )
       ringtoneSound.current = sound
     } catch (err) {
-      console.error('[useHybridCall] Ringtone error:', err)
+      // Ringtone playback failed - continue without it
     }
   }, [])
 
@@ -148,7 +148,7 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
         ringtoneSound.current = null
       }
     } catch (err) {
-      console.error('[useHybridCall] Stop ringtone error:', err)
+      // Ignore stop ringtone errors
     }
   }, [])
 
@@ -183,15 +183,12 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
         onFinished?.()
       })
     } catch (err) {
-      console.error('[useHybridCall] Play base64 audio error:', err)
       onFinished?.()
     }
   }
 
   // Send voice turn to Edge Function
   const sendVoiceTurn = async (audioBase64: string, format: string = 'm4a'): Promise<VoiceTurnResponse> => {
-    console.log('[useHybridCall] Sending voice turn, audio length:', audioBase64.length, 'format:', format)
-
     if (!authenticatedInvoke) {
       throw new Error('Not authenticated - missing getToken')
     }
@@ -207,34 +204,20 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
     })
 
     if (error) {
-      // Try to extract more details from the error
-      console.error('[useHybridCall] Edge Function error:', error)
-      console.error('[useHybridCall] Error details:', JSON.stringify(error, null, 2))
-
       throw new Error(error.message || 'Voice processing failed')
     }
 
-    const response = data as VoiceTurnResponse
-    console.log('[useHybridCall] Voice turn response:', response?.success, response?.latency_ms)
-    return response
+    return data as VoiceTurnResponse
   }
 
   // Start listening
   const startListening = useCallback(async () => {
-    console.log('[useHybridCall] startListening called', {
-      isMuted: isMutedRef.current,
-      isCharacterSpeaking: isCharacterSpeakingRef.current,
-      callState: callStateRef.current,
-      isListening: isListeningRef.current,
-    })
-
     if (
       isMutedRef.current ||
       isCharacterSpeakingRef.current ||
       callStateRef.current !== 'connected' ||
       isListeningRef.current
     ) {
-      console.log('[useHybridCall] Cannot start listening - conditions not met')
       return
     }
 
@@ -244,7 +227,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
 
       // Start recording with VAD callback - auto-stops when silence detected
       await startAudioRecording(() => {
-        console.log('[useHybridCall] VAD triggered - user stopped speaking')
         if (isListeningRef.current) {
           processRecording()
         }
@@ -252,18 +234,15 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
 
       setIsRecording(true)
       setProcessingState('listening')
-      console.log(`[useHybridCall] Now listening with VAD on ${Platform.OS}...`)
 
       // Fallback timeout - shorter on Android since VAD metering doesn't work
       const fallbackTimeout = Platform.OS === 'android' ? 5000 : 15000
       silenceTimer.current = setTimeout(async () => {
-        console.log(`[useHybridCall] Fallback timeout after ${fallbackTimeout / 1000}s on ${Platform.OS}`)
         if (isListeningRef.current) {
           await processRecording()
         }
       }, fallbackTimeout)
     } catch (err: any) {
-      console.error('[useHybridCall] Start listening error:', err)
       isListeningRef.current = false
       setIsRecording(false)
       setProcessingState('idle')
@@ -274,7 +253,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
   const processRecording = useCallback(async () => {
     if (!isListeningRef.current) return
 
-    console.log('[useHybridCall] Processing recording...')
     isListeningRef.current = false
     setIsRecording(false)
 
@@ -288,7 +266,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
 
     try {
       const uri = await stopAudioRecording()
-      console.log('[useHybridCall] Recording stopped, uri:', uri ? 'exists' : 'null')
 
       if (uri && callStateRef.current === 'connected') {
         // Convert to base64
@@ -296,7 +273,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
 
         // Detect format from URI (expo-av uses m4a on iOS, 3gp on Android)
         const format = uri.endsWith('.m4a') ? 'm4a' : uri.endsWith('.3gp') ? '3gp' : 'wav'
-        console.log('[useHybridCall] Audio format detected:', format, 'from URI:', uri.slice(-20))
 
         // Send to Edge Function
         const response = await sendVoiceTurn(audioBase64, format)
@@ -304,12 +280,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
         if (!response.success) {
           throw new Error(response.error || 'Voice turn failed')
         }
-
-        console.log('[useHybridCall] Response:', {
-          userTranscript: response.user_transcript,
-          assistantResponse: response.assistant_response,
-          latency: response.latency_ms,
-        })
 
         // Filter garbage transcripts (silence/noise detected as ".", "you", single chars)
         // Also filter known Whisper hallucinations that occur with silence/noise
@@ -336,7 +306,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
           isWhisperHallucination
 
         if (isGarbage) {
-          console.log('[useHybridCall] Garbage transcript detected, restarting listen:', transcript)
           setProcessingState('idle')
           setTimeout(() => startListening(), 500)
           return
@@ -370,7 +339,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
             response.audio_base64,
             response.audio_format || 'mp3',
             () => {
-              console.log('[useHybridCall] Character finished speaking')
               setIsCharacterSpeaking(false)
               isCharacterSpeakingRef.current = false
               setProcessingState('idle')
@@ -388,7 +356,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
         setTimeout(() => startListening(), 500)
       }
     } catch (err: any) {
-      console.error('[useHybridCall] Process error:', err)
       setError(err.message || 'Failed to process voice')
       setProcessingState('idle')
       // Try to continue listening
@@ -440,7 +407,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
 
       if (error || !openerResponse?.audio_base64) {
         // Fallback: just skip audio and start listening
-        console.log('[useHybridCall] Opener TTS failed, starting without audio')
         setIsCharacterSpeaking(false)
         isCharacterSpeakingRef.current = false
         setProcessingState('idle')
@@ -449,14 +415,12 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
       }
 
       await playBase64Audio(openerResponse.audio_base64, openerResponse.audio_format || 'mp3', () => {
-        console.log('[useHybridCall] Opener finished, starting to listen')
         setIsCharacterSpeaking(false)
         isCharacterSpeakingRef.current = false
         setProcessingState('idle')
         setTimeout(() => startListening(), 500)
       })
     } catch (err) {
-      console.error('[useHybridCall] Opener error:', err)
       setIsCharacterSpeaking(false)
       isCharacterSpeakingRef.current = false
       setProcessingState('idle')
@@ -466,8 +430,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
 
   // Start the call
   const startCall = useCallback(async () => {
-    console.log('[useHybridCall] Starting call...')
-
     // Check if user can make a call
     if (canMakeCall && !canMakeCall()) {
       setError('No minutes remaining. Upgrade to premium!')
@@ -492,7 +454,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
 
       // Ring for 10-15 seconds (random for realism)
       const ringDuration = 10000 + Math.random() * 5000
-      console.log('[useHybridCall] Ringing for', ringDuration, 'ms')
       await new Promise((r) => setTimeout(r, ringDuration))
 
       // Stop ringtone
@@ -504,7 +465,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
       callStateRef.current = 'connected'
       callStartTime.current = Date.now()
       lastMinuteCount.current = 0
-      console.log('[useHybridCall] Connected!')
 
       // Start duration timer
       durationInterval.current = setInterval(() => {
@@ -536,7 +496,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
 
           // Auto-end at time limit
           if (elapsed >= timeLimit) {
-            console.log('[useHybridCall] Time limit reached, ending call')
             onTimeLimitReached?.()
             setTimeout(() => {
               if (callStateRef.current === 'connected') {
@@ -550,7 +509,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
       // Play opener
       await playOpener()
     } catch (err: any) {
-      console.error('[useHybridCall] Start call error:', err)
       await stopRingtone()
       setError(err.message || 'Failed to start call')
       setCallState('idle')
@@ -571,7 +529,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
 
   // End the call
   const endCall = useCallback(async () => {
-    console.log('[useHybridCall] Ending call...')
     setCallState('ending')
     callStateRef.current = 'ending'
     setProcessingState('idle')
@@ -603,9 +560,6 @@ export function useHybridCall(options: UseHybridCallOptions = {}) {
 
     // Clear history
     conversationHistory.current = []
-
-    const totalMinutes = Math.ceil(callDuration / 60)
-    console.log(`[useHybridCall] Call ended: ${totalMinutes} minutes`)
 
     setCallState('ended')
     callStateRef.current = 'ended'

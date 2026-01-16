@@ -50,7 +50,7 @@ export const LEGAL_CONTENT = {
 • Opt-out of non-essential data collection
 • Cancel your subscription at any time
 
-Contact us at privacy@cara.app for any privacy-related requests.`,
+Contact us at privacy@your-domain.com for any privacy-related requests.`,
       },
     ],
   },
@@ -189,7 +189,7 @@ If you are experiencing a mental health emergency, please contact local emergenc
     sections: [
       {
         title: 'License Grant',
-        content: `Plutas Labs ("we", "us") grants you a limited, non-exclusive, non-transferable license to use the Cara mobile application ("App") for personal, non-commercial purposes.
+        content: `[Your Company Name] ("we", "us") grants you a limited, non-exclusive, non-transferable license to use the Cara mobile application ("App") for personal, non-commercial purposes.
 
 This license is subject to your compliance with these terms.`,
       },
@@ -209,7 +209,7 @@ Payment is processed through Google Play Store. We do not directly handle paymen
 • App design and user interface
 • Logos and branding
 
-are the exclusive property of Plutas Labs and are protected by copyright and trademark laws.`,
+are the exclusive property of [Your Company Name] and are protected by copyright and trademark laws.`,
       },
       {
         title: 'Restrictions',
@@ -240,9 +240,9 @@ Our total liability shall not exceed the amount you paid for the subscription in
       },
       {
         title: 'Contact Information',
-        content: `Plutas Labs
-Email: legal@cara.app
-Support: support@cara.app
+        content: `[Your Company Name]
+Email: legal@your-domain.com
+Support: support@your-domain.com
 
 For subscription issues, contact your app store directly.`,
       },

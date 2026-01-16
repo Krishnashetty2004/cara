@@ -15,7 +15,7 @@ export async function getUserMemory(
       .eq('character_id', characterId)
 
     if (error) {
-      console.error('[Memory] Fetch error:', error)
+      // [Memory] Error: Fetch error:', error)
       return {}
     }
 
@@ -39,7 +39,7 @@ export async function getUserMemory(
 
     return memory
   } catch (error) {
-    console.error('[Memory] Fetch error:', error)
+    // [Memory] Error: Fetch error:', error)
     return {}
   }
 }
@@ -70,10 +70,10 @@ export async function saveMemory(
       )
 
     if (error) {
-      console.error('[Memory] Save error:', error)
+      // [Memory] Error: Save error:', error)
     }
   } catch (error) {
-    console.error('[Memory] Save error:', error)
+    // [Memory] Error: Save error:', error)
   }
 }
 
@@ -111,7 +111,7 @@ export async function appendToMemory(
     // Save updated array
     await saveMemory(userId, characterId, key, JSON.stringify(values))
   } catch (error) {
-    console.error('[Memory] Append error:', error)
+    // [Memory] Error: Append error:', error)
   }
 }
 
@@ -129,7 +129,7 @@ export async function touchMemory(
       .eq('character_id', characterId)
       .eq('key', key)
   } catch (error) {
-    console.error('[Memory] Touch error:', error)
+    // [Memory] Error: Touch error:', error)
   }
 }
 
@@ -147,7 +147,7 @@ export async function deleteMemory(
       .eq('character_id', characterId)
       .eq('key', key)
   } catch (error) {
-    console.error('[Memory] Delete error:', error)
+    // [Memory] Error: Delete error:', error)
   }
 }
 
@@ -223,7 +223,7 @@ Examples:
 
     return []
   } catch (error) {
-    console.error('[Memory] Extract facts error:', error)
+    // [Memory] Error: Extract facts error:', error)
     return []
   }
 }
@@ -249,6 +249,6 @@ export async function processAndSaveFacts(
 
     console.log(`[Memory] Saved ${facts.length} facts for user ${userId} with ${characterId}`)
   } catch (error) {
-    console.error('[Memory] Process facts error:', error)
+    // [Memory] Error: Process facts error:', error)
   }
 }

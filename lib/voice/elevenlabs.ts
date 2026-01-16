@@ -49,7 +49,7 @@ export async function generateVoice(text: string, characterId?: CharacterId): Pr
 
     return fileUri
   } catch (error) {
-    console.error('[ElevenLabs] Voice generation error:', error)
+    // [ElevenLabs] Error: Voice generation error:', error)
     throw error
   }
 }
@@ -93,6 +93,6 @@ export async function cleanupAudioCache(): Promise<void> {
       }
     }
   } catch (error) {
-    console.error('[ElevenLabs] Cache cleanup error:', error)
+    // [ElevenLabs] Error: Cache cleanup error:', error)
   }
 }

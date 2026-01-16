@@ -102,8 +102,6 @@ class OpenAIRealtimeClient {
    */
   private async fetchRealtimeToken(): Promise<TokenResponse> {
     try {
-      console.log('[Realtime] Fetching session token from Edge Function...')
-
       if (!this.authenticatedInvoke) {
         return { error: 'Not authenticated - missing getToken' }
       }
@@ -113,13 +111,11 @@ class OpenAIRealtimeClient {
       })
 
       if (error) {
-        console.error('[Realtime] Token fetch error:', error)
         return { error: error.message || 'Failed to get session token' }
       }
 
       return data as TokenResponse
     } catch (err) {
-      console.error('[Realtime] Token fetch exception:', err)
       return { error: 'Network error while fetching token' }
     }
   }
@@ -146,14 +142,8 @@ class OpenAIRealtimeClient {
 
       // If user runs out of time and not premium, disconnect
       if (newRemaining <= 0 && !this.isPremium) {
-        console.log('[Realtime] Free tier limit reached, disconnecting')
         this.onEvent({ type: 'limit_reached', isPremium: false })
         this.disconnect()
-      }
-
-      // Warn when 30 seconds remaining
-      if (newRemaining === 30 && !this.isPremium) {
-        console.log('[Realtime] 30 seconds remaining warning')
       }
     }, 1000)
   }
@@ -178,14 +168,10 @@ class OpenAIRealtimeClient {
 
   async connect(): Promise<boolean> {
     try {
-      console.log('[Realtime] Connecting to OpenAI Realtime API...')
-
       // Step 1: Fetch ephemeral token from our Edge Function
       const tokenResponse = await this.fetchRealtimeToken()
 
       if (tokenResponse.error) {
-        console.error('[Realtime] Token error:', tokenResponse.error)
-
         if (tokenResponse.limit_reached) {
           this.onEvent({ type: 'limit_reached', isPremium: tokenResponse.is_premium || false })
           return false
@@ -196,7 +182,6 @@ class OpenAIRealtimeClient {
       }
 
       if (!tokenResponse.token) {
-        console.error('[Realtime] No token in response')
         this.onEvent({ type: 'error', message: 'Failed to get session token' })
         return false
       }
@@ -204,8 +189,6 @@ class OpenAIRealtimeClient {
       // Store usage info
       this.remainingSeconds = tokenResponse.remaining_seconds || 0
       this.isPremium = tokenResponse.is_premium || false
-
-      console.log(`[Realtime] Token received, remaining: ${this.remainingSeconds}s, premium: ${this.isPremium}`)
 
       // Step 2: Connect to OpenAI using ephemeral token
       return new Promise((resolve) => {
@@ -219,7 +202,6 @@ class OpenAIRealtimeClient {
           ])
 
           this.ws.onopen = () => {
-            console.log('[Realtime] WebSocket connected')
             this.isConnected = true
             this.reconnectAttempts = 0
             this.configureSession()
@@ -232,15 +214,13 @@ class OpenAIRealtimeClient {
             resolve(true)
           }
 
-          this.ws.onclose = (event) => {
-            console.log('[Realtime] WebSocket closed:', event.code, event.reason)
+          this.ws.onclose = () => {
             this.isConnected = false
             this.stopUsageTracking()
             this.onEvent({ type: 'disconnected' })
           }
 
-          this.ws.onerror = (error) => {
-            console.error('[Realtime] WebSocket error:', error)
+          this.ws.onerror = () => {
             this.onEvent({ type: 'error', message: 'Connection error' })
             resolve(false)
           }
@@ -250,14 +230,12 @@ class OpenAIRealtimeClient {
           }
 
         } catch (error) {
-          console.error('[Realtime] WebSocket creation error:', error)
           this.onEvent({ type: 'error', message: 'Failed to create connection' })
           resolve(false)
         }
       })
 
     } catch (error) {
-      console.error('[Realtime] Connection error:', error)
       this.onEvent({ type: 'error', message: 'Failed to connect' })
       return false
     }
@@ -297,7 +275,6 @@ class OpenAIRealtimeClient {
     }
 
     this.send(sessionConfig)
-    console.log('[Realtime] Session configured with character:', this.characterId)
 
     // Start the conversation after a brief delay
     setTimeout(() => {
@@ -386,8 +363,6 @@ Don't wait for them - YOU start talking first!]`
         modalities: ['text', 'audio'],
       },
     })
-
-    console.log('[Realtime] Conversation started with', timeContext, 'greeting, stage:', stage)
   }
 
   // Get dynamic mood guidance based on turn count and randomness
@@ -428,45 +403,30 @@ Don't wait for them - YOU start talking first!]`
     try {
       const message = JSON.parse(data)
 
-      // Log audio.delta specifically to debug
-      if (message.type === 'response.audio.delta') {
-        console.log('[Realtime] GOT AUDIO DELTA! Keys:', Object.keys(message), 'delta length:', message.delta?.length)
-      }
-
       switch (message.type) {
         case 'session.created':
-          console.log('[Realtime] Session created:', message.session?.id)
-          break
-
         case 'session.updated':
-          console.log('[Realtime] Session updated, modalities:', message.session?.modalities, 'voice:', message.session?.voice)
           break
 
         case 'input_audio_buffer.speech_started':
-          console.log('[Realtime] User started speaking')
           this.onEvent({ type: 'speech_started' })
-          // Stop any playing audio when user interrupts
           this.stopAudioPlayback()
           break
 
         case 'input_audio_buffer.speech_stopped':
-          console.log('[Realtime] User stopped speaking')
           this.onEvent({ type: 'speech_stopped' })
           break
 
         case 'conversation.item.input_audio_transcription.completed':
-          console.log('[Realtime] Transcription:', message.transcript)
           this.onEvent({
             type: 'transcription',
             text: message.transcript || '',
             isFinal: true
           })
-          // Inject dynamic mood guidance for next response
           this.injectMoodGuidance()
           break
 
         case 'response.created':
-          console.log('[Realtime] Response started, modalities:', message.response?.modalities)
           this.onEvent({ type: 'response_started' })
           break
 
@@ -487,16 +447,13 @@ Don't wait for them - YOU start talking first!]`
           break
 
         case 'response.audio.delta':
-          // Queue audio for playback
           if (message.delta) {
-            console.log('[Realtime] Audio chunk received, length:', message.delta.length)
             this.audioQueue.push(message.delta)
             this.processAudioQueue()
           }
           break
 
         case 'response.audio_transcript.delta':
-          // Handle transcript of audio response
           if (message.delta) {
             this.onEvent({
               type: 'response_text',
@@ -507,9 +464,7 @@ Don't wait for them - YOU start talking first!]`
           break
 
         case 'response.audio_transcript.done':
-          // Final transcript of audio response
           if (message.transcript) {
-            console.log('[Realtime] Audio transcript:', message.transcript)
             this.onEvent({
               type: 'response_text',
               text: message.transcript || '',
@@ -519,63 +474,31 @@ Don't wait for them - YOU start talking first!]`
           break
 
         case 'response.audio.done':
-          console.log('[Realtime] Audio response complete, queue length:', this.audioQueue.length)
           break
 
         case 'response.done':
-          console.log('[Realtime] Response complete, output items:', message.response?.output?.length, 'status:', message.response?.status)
-          // Log error details if response failed
-          if (message.response?.status === 'failed') {
-            console.error('[Realtime] Response FAILED! Status details:', JSON.stringify(message.response?.status_details))
-          }
-          if (message.response?.output) {
-            message.response.output.forEach((item: any, i: number) => {
-              console.log(`[Realtime] Output item ${i}: type=${item.type}, role=${item.role}, content types:`, item.content?.map((c: any) => c.type))
-            })
-          }
           this.onEvent({ type: 'response_done' })
           break
 
         case 'response.output_item.done':
-          // Response item completed
-          break
-
         case 'rate_limits.updated':
-          // Rate limit info
+        case 'response.output_item.added':
+        case 'response.content_part.added':
+        case 'conversation.item.truncated':
           break
 
         case 'error':
-          console.error('[Realtime] API Error:', JSON.stringify(message.error))
           this.onEvent({
             type: 'error',
             message: message.error?.message || 'Unknown error'
           })
           break
 
-        case 'response.output_item.added':
-          console.log('[Realtime] Output item added:', message.item?.type, 'content:', message.item?.content?.map((c: any) => c.type))
-          break
-
-        case 'response.content_part.added':
-          console.log('[Realtime] Content part added:', message.part?.type)
-          break
-
-        case 'conversation.item.truncated':
-          console.log('[Realtime] Conversation item truncated:', message.item_id)
-          break
-
         default:
-          // Log unhandled message types for debugging
-          if (message.type?.includes('audio') && !message.type?.includes('transcript')) {
-            console.log('[Realtime] Audio-related message:', message.type, JSON.stringify(message).slice(0, 200))
-          } else if (message.type?.includes('failed') || message.type?.includes('error') || message.type?.includes('cancelled')) {
-            console.error('[Realtime] Error/Failed message:', message.type, JSON.stringify(message).slice(0, 500))
-          } else if (!message.type?.startsWith('response.content_part') && !message.type?.includes('transcript')) {
-            console.log('[Realtime] Unhandled message:', message.type)
-          }
+          break
       }
     } catch (error) {
-      console.error('[Realtime] Error parsing message:', error)
+      // Parse error - ignore
     }
   }
 
@@ -616,12 +539,10 @@ Don't wait for them - YOU start talking first!]`
       }
       const combinedAudio = btoa(binary)
 
-      console.log('[Realtime] Playing combined audio, chunks:', audioChunks.length, 'total bytes:', combinedBytes.length)
-
       // Convert base64 PCM16 to playable format
       await this.playPCMAudio(combinedAudio)
     } catch (error) {
-      console.error('[Realtime] Error playing audio:', error)
+      // Audio playback error - ignore
     } finally {
       this.isPlayingAudio = false
       // Process any remaining audio
@@ -633,12 +554,6 @@ Don't wait for them - YOU start talking first!]`
 
   private async playPCMAudio(base64Audio: string) {
     try {
-      console.log('[Realtime] Playing audio, base64 length:', base64Audio.length)
-
-      // Decode to check actual byte size
-      const pcmBytes = this.base64ToUint8Array(base64Audio)
-      console.log('[Realtime] PCM bytes:', pcmBytes.length)
-
       // Create a temporary WAV file from PCM16 data
       const wavData = this.createWavFromPCM(base64Audio)
       const cacheDir = FileSystem.cacheDirectory || FileSystem.documentDirectory || ''
@@ -647,10 +562,6 @@ Don't wait for them - YOU start talking first!]`
       await FileSystem.writeAsStringAsync(fileUri, wavData, {
         encoding: 'base64',
       })
-
-      // Verify file was written
-      const fileInfo = await FileSystem.getInfoAsync(fileUri)
-      console.log('[Realtime] WAV file written, size:', fileInfo.exists ? (fileInfo as any).size : 'N/A')
 
       // Set audio mode that allows BOTH recording and playback through SPEAKER
       await Audio.setAudioModeAsync({
@@ -675,12 +586,10 @@ Don't wait for them - YOU start talking first!]`
       )
 
       this.currentSound = sound
-      console.log('[Realtime] Audio playback started')
 
       // Wait for playback to complete
       return new Promise<void>((resolve) => {
         const timeout = setTimeout(() => {
-          console.log('[Realtime] Audio playback timeout, resolving')
           sound.unloadAsync().catch(() => {})
           this.currentSound = null
           FileSystem.deleteAsync(fileUri, { idempotent: true }).catch(() => {})
@@ -690,7 +599,6 @@ Don't wait for them - YOU start talking first!]`
         sound.setOnPlaybackStatusUpdate((status) => {
           if (status.isLoaded) {
             if (status.didJustFinish) {
-              console.log('[Realtime] Audio playback finished')
               clearTimeout(timeout)
               sound.unloadAsync().catch(() => {})
               this.currentSound = null
@@ -698,7 +606,6 @@ Don't wait for them - YOU start talking first!]`
               resolve()
             }
           } else if ('error' in status) {
-            console.error('[Realtime] Playback error:', status.error)
             clearTimeout(timeout)
             sound.unloadAsync().catch(() => {})
             this.currentSound = null
@@ -708,7 +615,7 @@ Don't wait for them - YOU start talking first!]`
         })
       })
     } catch (error) {
-      console.error('[Realtime] Error in playPCMAudio:', error)
+      // Playback error - ignore
     }
   }
 
@@ -864,15 +771,13 @@ Don't wait for them - YOU start talking first!]`
   }
 
   async disconnect() {
-    console.log('[Realtime] Disconnecting...')
-
     // Stop usage tracking first
     this.stopUsageTracking()
 
     // Report usage to backend
     const callDuration = this.getCallDuration()
     if (callDuration > 0) {
-      this.reportUsage(callDuration).catch(console.error)
+      this.reportUsage(callDuration).catch(() => {})
     }
 
     await this.stopAudioPlayback()
@@ -891,23 +796,16 @@ Don't wait for them - YOU start talking first!]`
    */
   private async reportUsage(durationSeconds: number): Promise<void> {
     try {
-      console.log(`[Realtime] Reporting usage: ${durationSeconds} seconds`)
-
       if (!this.authenticatedInvoke) {
-        console.error('[Realtime] Cannot track usage - not authenticated')
         return
       }
 
-      const { error } = await this.authenticatedInvoke('track-usage', {
+      await this.authenticatedInvoke('track-usage', {
         method: 'POST',
         body: { duration_seconds: durationSeconds },
       })
-
-      if (error) {
-        console.error('[Realtime] Failed to report usage:', error)
-      }
     } catch (err) {
-      console.error('[Realtime] Error reporting usage:', err)
+      // Usage reporting error - ignore
     }
   }
 

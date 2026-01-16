@@ -105,21 +105,21 @@ export function useRealtimeCall(options: UseRealtimeCallOptions): UseRealtimeCal
   const handleRealtimeEvent = useCallback((event: RealtimeEvent) => {
     switch (event.type) {
       case 'connected':
-        console.log('[useRealtimeCall] Connected')
+        // [useRealtimeCall] Connected')
         setCallState('connected')
         setProcessingState('listening')
         startRecording()
         break
 
       case 'disconnected':
-        console.log('[useRealtimeCall] Disconnected')
+        // [useRealtimeCall] Disconnected')
         if (callState !== 'ending' && callState !== 'ended') {
           setError('Connection lost')
         }
         break
 
       case 'error':
-        console.error('[useRealtimeCall] Error:', event.message)
+        // [useRealtimeCall] Error: Error:', event.message)
         setError(event.message)
         break
 
@@ -197,18 +197,18 @@ export function useRealtimeCall(options: UseRealtimeCallOptions): UseRealtimeCal
   const startRecording = useCallback(async () => {
     // Prevent concurrent start calls
     if (isStartingRecordingRef.current) {
-      console.log('[useRealtimeCall] Already starting recording, skipping...')
+      // [useRealtimeCall] Already starting recording, skipping...')
       return
     }
     if (isRecordingRef.current || isMutedRef.current) {
-      console.log('[useRealtimeCall] Already recording or muted, skipping...')
+      // [useRealtimeCall] Already recording or muted, skipping...')
       return
     }
 
     isStartingRecordingRef.current = true
 
     try {
-      console.log('[useRealtimeCall] Starting recording...')
+      // [useRealtimeCall] Starting recording...')
 
       // Clear any existing interval
       if (audioIntervalRef.current) {
@@ -313,17 +313,17 @@ export function useRealtimeCall(options: UseRealtimeCallOptions): UseRealtimeCal
           // Only log if it's not an expected "already unloaded" error
           const errorMessage = error instanceof Error ? error.message : String(error)
           if (!errorMessage.includes('already been unloaded')) {
-            console.error('[useRealtimeCall] Audio chunk error:', error)
+            // [useRealtimeCall] Error: Audio chunk error:', error)
           }
         } finally {
           isProcessingChunkRef.current = false
         }
       }, 250)
 
-      console.log('[useRealtimeCall] Recording started')
+      // [useRealtimeCall] Recording started')
       isStartingRecordingRef.current = false
     } catch (error) {
-      console.error('[useRealtimeCall] Start recording error:', error)
+      // [useRealtimeCall] Error: Start recording error:', error)
       isRecordingRef.current = false
       isStartingRecordingRef.current = false
     }
@@ -331,7 +331,7 @@ export function useRealtimeCall(options: UseRealtimeCallOptions): UseRealtimeCal
 
   // Stop recording
   const stopRecording = useCallback(async () => {
-    console.log('[useRealtimeCall] Stopping recording...')
+    // [useRealtimeCall] Stopping recording...')
     isRecordingRef.current = false
     isStartingRecordingRef.current = false
 
@@ -363,12 +363,12 @@ export function useRealtimeCall(options: UseRealtimeCallOptions): UseRealtimeCal
       }
       recordingRef.current = null
     }
-    console.log('[useRealtimeCall] Recording stopped')
+    // [useRealtimeCall] Recording stopped')
   }, [])
 
   // Start call
   const startCall = useCallback(async () => {
-    console.log('[useRealtimeCall] Starting call...')
+    // [useRealtimeCall] Starting call...')
     setCallState('connecting')
     setError(null)
     setUserTranscript('')
@@ -435,7 +435,7 @@ export function useRealtimeCall(options: UseRealtimeCallOptions): UseRealtimeCal
       }, 60000)
 
     } catch (error) {
-      console.error('[useRealtimeCall] Start call error:', error)
+      // [useRealtimeCall] Error: Start call error:', error)
       setError('Failed to start call')
       setCallState('idle')
     }
@@ -443,7 +443,7 @@ export function useRealtimeCall(options: UseRealtimeCallOptions): UseRealtimeCal
 
   // End call
   const endCall = useCallback(async () => {
-    console.log('[useRealtimeCall] Ending call...')
+    // [useRealtimeCall] Ending call...')
     setCallState('ending')
 
     // Clear timers

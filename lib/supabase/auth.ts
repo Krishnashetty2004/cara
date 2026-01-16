@@ -67,7 +67,7 @@ export async function signInWithGoogle(): Promise<AuthUser | null> {
 
     return null
   } catch (error) {
-    console.error('[Auth] Google sign-in error:', error)
+    // [Auth] Error: Google sign-in error:', error)
     throw error
   }
 }
@@ -78,7 +78,7 @@ export async function signOut(): Promise<void> {
     const { error } = await supabase.auth.signOut()
     if (error) throw error
   } catch (error) {
-    console.error('[Auth] Sign out error:', error)
+    // [Auth] Error: Sign out error:', error)
     throw error
   }
 }
@@ -94,7 +94,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
     return await getOrCreateUser(session.user)
   } catch (error) {
-    console.error('[Auth] Get current user error:', error)
+    // [Auth] Error: Get current user error:', error)
     return null
   }
 }
@@ -115,7 +115,7 @@ async function getOrCreateUser(authUser: { id: string; email?: string; user_meta
 
   if (fetchError && fetchError.code !== 'PGRST116') {
     // PGRST116 = no rows found, which is fine
-    console.error('[Auth] Fetch user error:', fetchError)
+    // [Auth] Error: Fetch user error:', fetchError)
   }
 
   if (existingUser) {
@@ -138,7 +138,7 @@ async function getOrCreateUser(authUser: { id: string; email?: string; user_meta
     .single()
 
   if (createError) {
-    console.error('[Auth] Create user error:', createError)
+    // [Auth] Error: Create user error:', createError)
     throw createError
   }
 
@@ -203,7 +203,7 @@ export async function updateUserStats(
       }
     }
   } catch (error) {
-    console.error('[Auth] Update user stats error:', error)
+    // [Auth] Error: Update user stats error:', error)
   }
 }
 
@@ -217,13 +217,13 @@ export async function getUserRelationship(userId: string): Promise<DbRelationshi
       .single()
 
     if (error) {
-      console.error('[Auth] Get relationship error:', error)
+      // [Auth] Error: Get relationship error:', error)
       return null
     }
 
     return data as DbRelationshipProgress
   } catch (error) {
-    console.error('[Auth] Get relationship error:', error)
+    // [Auth] Error: Get relationship error:', error)
     return null
   }
 }

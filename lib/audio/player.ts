@@ -11,7 +11,7 @@ export async function setupPlaybackMode(useSpeaker: boolean = true): Promise<voi
       playThroughEarpieceAndroid: !useSpeaker,
     })
   } catch (error) {
-    console.error('[Player] Playback mode setup error:', error)
+    // [Player] Error: Playback mode setup error:', error)
     throw error
   }
 }
@@ -43,7 +43,7 @@ export async function playAudio(
 
     return sound
   } catch (error) {
-    console.error('[Player] Play audio error:', error)
+    // [Player] Error: Play audio error:', error)
     throw error
   }
 }
@@ -56,7 +56,7 @@ export async function stopAudio(): Promise<void> {
       currentSound = null
     }
   } catch (error) {
-    console.error('[Player] Stop audio error:', error)
+    // [Player] Error: Stop audio error:', error)
     currentSound = null
   }
 }
@@ -67,7 +67,7 @@ export async function pauseAudio(): Promise<void> {
       await currentSound.pauseAsync()
     }
   } catch (error) {
-    console.error('[Player] Pause audio error:', error)
+    // [Player] Error: Pause audio error:', error)
   }
 }
 
@@ -77,7 +77,7 @@ export async function resumeAudio(): Promise<void> {
       await currentSound.playAsync()
     }
   } catch (error) {
-    console.error('[Player] Resume audio error:', error)
+    // [Player] Error: Resume audio error:', error)
   }
 }
 
@@ -87,7 +87,7 @@ export async function setVolume(volume: number): Promise<void> {
       await currentSound.setVolumeAsync(Math.max(0, Math.min(1, volume)))
     }
   } catch (error) {
-    console.error('[Player] Set volume error:', error)
+    // [Player] Error: Set volume error:', error)
   }
 }
 

@@ -20,7 +20,7 @@ export async function setItem<T>(key: StorageKey, value: T): Promise<void> {
     const jsonValue = JSON.stringify(value)
     await AsyncStorage.setItem(key, jsonValue)
   } catch (error) {
-    console.error(`Error saving ${key}:`, error)
+    // Error saving ${key}:`, error)
     throw error
   }
 }
@@ -30,7 +30,7 @@ export async function getItem<T>(key: StorageKey): Promise<T | null> {
     const jsonValue = await AsyncStorage.getItem(key)
     return jsonValue != null ? JSON.parse(jsonValue) : null
   } catch (error) {
-    console.error(`Error reading ${key}:`, error)
+    // Error reading ${key}:`, error)
     return null
   }
 }
@@ -39,7 +39,7 @@ export async function removeItem(key: StorageKey): Promise<void> {
   try {
     await AsyncStorage.removeItem(key)
   } catch (error) {
-    console.error(`Error removing ${key}:`, error)
+    // Error removing ${key}:`, error)
   }
 }
 

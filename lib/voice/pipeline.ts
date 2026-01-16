@@ -11,9 +11,9 @@ export async function processVoiceInput(audioUri: string, characterId?: Characte
   const charId = characterId || getCurrentCharacter()
 
   // Step 1: Transcribe user audio
-  console.log('[Pipeline] Transcribing audio...')
+  // [Pipeline] Transcribing audio...')
   const userText = await transcribeAudio(audioUri)
-  console.log('[Pipeline] User said:', userText)
+  // [Pipeline] User said:', userText)
 
   // Skip if transcription is empty or too short
   if (!userText || userText.trim().length < 2) {
@@ -26,9 +26,9 @@ export async function processVoiceInput(audioUri: string, characterId?: Characte
   console.log(`[Pipeline] ${charId} says:`, responseText)
 
   // Step 3: Generate character's voice
-  console.log('[Pipeline] Generating voice...')
+  // [Pipeline] Generating voice...')
   const responseAudioUri = await generateVoice(responseText, charId)
-  console.log('[Pipeline] Audio generated:', responseAudioUri)
+  // [Pipeline] Audio generated:', responseAudioUri)
 
   return {
     userText,

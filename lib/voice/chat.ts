@@ -27,7 +27,6 @@ export function getConversationHistory(): ConversationMessage[] {
 // Set current character for the session
 export function setCurrentCharacter(characterId: CharacterId): void {
   currentCharacterId = characterId
-  console.log('[Chat] Character set:', characterId)
 }
 
 // Get current character
@@ -44,11 +43,6 @@ export function setUserContext(
   currentUserMemory = memory
   currentRelationship = relationship
   currentLastSummary = lastSummary
-  console.log('[Chat] User context set:', {
-    hasMemory: !!memory,
-    hasRelationship: !!relationship,
-    hasLastSummary: !!lastSummary,
-  })
 }
 
 // Clear user context
@@ -123,7 +117,6 @@ export async function getCharacterResponse(
 
     return reply
   } catch (error) {
-    console.error('[Chat] Completion error:', error)
     throw error
   }
 }

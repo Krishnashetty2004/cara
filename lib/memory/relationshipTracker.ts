@@ -28,7 +28,7 @@ export async function getRelationship(
           notes: null,
         }
       }
-      console.error('[Relationship] Get error:', error)
+      // [Relationship] Error: Get error:', error)
       return null
     }
 
@@ -42,7 +42,7 @@ export async function getRelationship(
       notes: rel.notes,
     }
   } catch (error) {
-    console.error('[Relationship] Get error:', error)
+    // [Relationship] Error: Get error:', error)
     return null
   }
 }
@@ -65,7 +65,7 @@ async function createRelationship(
         relationship_stage: 'stranger',
       })
   } catch (error) {
-    console.error('[Relationship] Create error:', error)
+    // [Relationship] Error: Create error:', error)
   }
 }
 
@@ -134,9 +134,9 @@ export async function updateRelationshipAfterCall(
       .eq('user_id', userId)
       .eq('character_id', characterId)
 
-    console.log(`[Relationship] Updated ${characterId}: trust=${newTrust}, flirt=${newFlirt}, stage=${newStage}`)
+    // [Relationship] Updated ${characterId}: trust=${newTrust}, flirt=${newFlirt}, stage=${newStage}`)
   } catch (error) {
-    console.error('[Relationship] Update error:', error)
+    // [Relationship] Error: Update error:', error)
   }
 }
 
@@ -173,7 +173,7 @@ export async function addInsideJoke(
         .eq('character_id', characterId)
     }
   } catch (error) {
-    console.error('[Relationship] Add joke error:', error)
+    // [Relationship] Error: Add joke error:', error)
   }
 }
 
@@ -198,7 +198,7 @@ export async function addPetName(
         .eq('character_id', characterId)
     }
   } catch (error) {
-    console.error('[Relationship] Add pet name error:', error)
+    // [Relationship] Error: Add pet name error:', error)
   }
 }
 
@@ -215,7 +215,7 @@ export async function updateNotes(
       .eq('user_id', userId)
       .eq('character_id', characterId)
   } catch (error) {
-    console.error('[Relationship] Update notes error:', error)
+    // [Relationship] Error: Update notes error:', error)
   }
 }
 
@@ -296,7 +296,7 @@ If no inside jokes found, return [].`,
       return []
     }
   } catch (error) {
-    console.error('[Relationship] Extract jokes error:', error)
+    // [Relationship] Error: Extract jokes error:', error)
     return []
   }
 }

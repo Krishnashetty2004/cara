@@ -37,7 +37,7 @@ export async function transcribeAudio(audioUri: string): Promise<string> {
     const data = await response.json()
     return data.text || ''
   } catch (error) {
-    console.error('[Whisper] Transcription error:', error)
+    // [Whisper] Error: Transcription error:', error)
     throw error
   }
 }

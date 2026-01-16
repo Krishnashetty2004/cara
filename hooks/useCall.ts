@@ -47,9 +47,8 @@ async function preCacheOpener(characterId: CharacterId = DEFAULT_CHARACTER) {
     cachedOpenerText = opener
     cachedOpenerCharacterId = characterId
     cachedOpenerAudio = await generateCharacterVoice(opener, characterId)
-    console.log(`[useCall] Opener pre-cached for ${characterId}:`, opener.substring(0, 30) + '...')
   } catch (err) {
-    console.error('[useCall] Failed to pre-cache opener:', err)
+    // Pre-cache failed - will generate fresh opener
     cachedOpenerAudio = null
     cachedOpenerText = null
     cachedOpenerCharacterId = null
@@ -122,7 +121,7 @@ export function useCall(options: UseCallOptions = {}) {
       )
       ringtoneSound.current = sound
     } catch (err) {
-      console.error('[useCall] Ringtone error:', err)
+      // Ringtone playback failed - continue without it
     }
   }, [])
 
@@ -135,21 +134,13 @@ export function useCall(options: UseCallOptions = {}) {
         ringtoneSound.current = null
       }
     } catch (err) {
-      console.error('[useCall] Stop ringtone error:', err)
+      // Ignore stop ringtone errors
     }
   }, [])
 
   // Start listening - using refs to avoid stale closures
   const startListening = useCallback(async () => {
-    console.log('[useCall] startListening called', {
-      isMuted: isMutedRef.current,
-      isCharacterSpeaking: isCharacterSpeakingRef.current,
-      callState: callStateRef.current,
-      isListening: isListeningRef.current
-    })
-
     if (isMutedRef.current || isCharacterSpeakingRef.current || callStateRef.current !== 'connected' || isListeningRef.current) {
-      console.log('[useCall] Cannot start listening - conditions not met')
       return
     }
 
@@ -159,17 +150,14 @@ export function useCall(options: UseCallOptions = {}) {
       await startAudioRecording()
       setIsRecording(true)
       setProcessingState('listening')
-      console.log('[useCall] Now listening...')
 
       // Auto-stop after 5 seconds
       silenceTimer.current = setTimeout(async () => {
-        console.log('[useCall] Auto-stop after 5 seconds')
         if (isListeningRef.current) {
           await processRecording()
         }
       }, 5000)
     } catch (err: any) {
-      console.error('[useCall] Start listening error:', err)
       isListeningRef.current = false
       setIsRecording(false)
       setProcessingState('idle')
@@ -180,7 +168,6 @@ export function useCall(options: UseCallOptions = {}) {
   const processRecording = useCallback(async () => {
     if (!isListeningRef.current) return
 
-    console.log('[useCall] Processing recording...')
     isListeningRef.current = false
     setIsRecording(false)
 
@@ -194,12 +181,10 @@ export function useCall(options: UseCallOptions = {}) {
 
     try {
       const uri = await stopAudioRecording()
-      console.log('[useCall] Recording stopped, uri:', uri ? 'exists' : 'null')
 
       if (uri && callStateRef.current === 'connected') {
         // Process voice input through pipeline
         const { userText, responseText: text } = await processVoiceInput(uri)
-        console.log('[useCall] Got response:', text.substring(0, 30) + '...')
 
         // Log user message for persistence
         if (userText && onUserMessage) {
@@ -222,7 +207,6 @@ export function useCall(options: UseCallOptions = {}) {
         try {
           const audioUri = await generateCharacterVoice(text, characterId)
           await playAudio(audioUri, () => {
-            console.log('[useCall] Character finished speaking')
             setIsCharacterSpeaking(false)
             isCharacterSpeakingRef.current = false
             setProcessingState('idle')
@@ -230,7 +214,6 @@ export function useCall(options: UseCallOptions = {}) {
             setTimeout(() => startListening(), 500)
           })
         } catch (err: any) {
-          console.error('[useCall] Voice playback error:', err)
           setIsCharacterSpeaking(false)
           isCharacterSpeakingRef.current = false
           setProcessingState('idle')
@@ -243,7 +226,6 @@ export function useCall(options: UseCallOptions = {}) {
         setTimeout(() => startListening(), 500)
       }
     } catch (err: any) {
-      console.error('[useCall] Process error:', err)
       setProcessingState('idle')
       // Start listening again even on error
       setTimeout(() => startListening(), 1000)
@@ -252,8 +234,6 @@ export function useCall(options: UseCallOptions = {}) {
 
   // Start the call
   const startCall = useCallback(async () => {
-    console.log('[useCall] Starting call...')
-
     // Check if user can make a call
     if (canMakeCall && !canMakeCall()) {
       setError('No minutes remaining. Upgrade to premium!')
@@ -278,7 +258,6 @@ export function useCall(options: UseCallOptions = {}) {
 
       // Ring for 10-15 seconds (random)
       const ringDuration = 10000 + Math.random() * 5000
-      console.log('[useCall] Ringing for', ringDuration, 'ms')
       await new Promise((r) => setTimeout(r, ringDuration))
 
       // Stop ringtone and setup audio mode
@@ -290,7 +269,6 @@ export function useCall(options: UseCallOptions = {}) {
       callStateRef.current = 'connected'
       callStartTime.current = Date.now()
       lastMinuteCount.current = 0
-      console.log('[useCall] Connected!')
 
       // Start duration timer
       durationInterval.current = setInterval(() => {
@@ -322,7 +300,6 @@ export function useCall(options: UseCallOptions = {}) {
 
           // Auto-end at time limit
           if (elapsed >= timeLimit) {
-            console.log('[useCall] Time limit reached, ending call')
             onTimeLimitReached?.()
             // Call endCall but we need to do it outside the interval
             setTimeout(() => {
@@ -351,7 +328,6 @@ export function useCall(options: UseCallOptions = {}) {
         preCacheOpener(characterId)
       } else {
         openerText = character.getRandomOpener()
-        console.log(`[useCall] Generating fresh opener for ${characterId}:`, openerText.substring(0, 30) + '...')
       }
 
       setResponseText(openerText)
@@ -371,7 +347,6 @@ export function useCall(options: UseCallOptions = {}) {
 
       // Play opener
       await playAudio(openerAudio, () => {
-        console.log('[useCall] Opener finished, starting to listen')
         setIsCharacterSpeaking(false)
         isCharacterSpeakingRef.current = false
         setProcessingState('idle')
@@ -380,7 +355,6 @@ export function useCall(options: UseCallOptions = {}) {
       })
 
     } catch (err: any) {
-      console.error('[useCall] Start call error:', err)
       await stopRingtone()
       setError(err.message || 'Failed to start call')
       setCallState('idle')
@@ -391,7 +365,6 @@ export function useCall(options: UseCallOptions = {}) {
 
   // End the call
   const endCall = useCallback(async () => {
-    console.log('[useCall] Ending call...')
     setCallState('ending')
     callStateRef.current = 'ending'
     setProcessingState('idle')
@@ -423,10 +396,6 @@ export function useCall(options: UseCallOptions = {}) {
 
     // Reset conversation
     resetConversation()
-
-    // Final minute count
-    const totalMinutes = Math.ceil(callDuration / 60)
-    console.log(`[useCall] Call ended: ${totalMinutes} minutes`)
 
     setCallState('ended')
     callStateRef.current = 'ended'

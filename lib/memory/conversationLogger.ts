@@ -18,13 +18,13 @@ export async function createConversation(
       .single()
 
     if (error) {
-      console.error('[ConversationLogger] Create error:', error)
+      // [ConversationLogger] Error: Create error:', error)
       return null
     }
 
     return data.id
   } catch (error) {
-    console.error('[ConversationLogger] Create error:', error)
+    // [ConversationLogger] Error: Create error:', error)
     return null
   }
 }
@@ -43,10 +43,10 @@ export async function logMessage(
     })
 
     if (error) {
-      console.error('[ConversationLogger] Log message error:', error)
+      // [ConversationLogger] Error: Log message error:', error)
     }
   } catch (error) {
-    console.error('[ConversationLogger] Log message error:', error)
+    // [ConversationLogger] Error: Log message error:', error)
   }
 }
 
@@ -89,10 +89,10 @@ export async function endConversation(
       .eq('id', conversationId)
 
     if (error) {
-      console.error('[ConversationLogger] End conversation error:', error)
+      // [ConversationLogger] Error: End conversation error:', error)
     }
   } catch (error) {
-    console.error('[ConversationLogger] End conversation error:', error)
+    // [ConversationLogger] Error: End conversation error:', error)
   }
 }
 
@@ -154,7 +154,7 @@ Return JSON:
       return { summary: 'Call completed', mood: 'casual' }
     }
   } catch (error) {
-    console.error('[ConversationLogger] Generate summary error:', error)
+    // [ConversationLogger] Error: Generate summary error:', error)
     return { summary: 'Call completed', mood: 'casual' }
   }
 }
@@ -176,7 +176,7 @@ export async function getRecentConversations(
       .limit(limit)
 
     if (error) {
-      console.error('[ConversationLogger] Get recent error:', error)
+      // [ConversationLogger] Error: Get recent error:', error)
       return []
     }
 
@@ -186,7 +186,7 @@ export async function getRecentConversations(
       date: c.ended_at || '',
     }))
   } catch (error) {
-    console.error('[ConversationLogger] Get recent error:', error)
+    // [ConversationLogger] Error: Get recent error:', error)
     return []
   }
 }

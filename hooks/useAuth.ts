@@ -52,7 +52,7 @@ export function useAuth(): UseAuthReturn {
         const token = await getToken()
         const hasValidSession = !!token
         setRealAuthState(hasValidSession)
-        console.log('[useAuth] Real auth state:', { hasToken: hasValidSession, isSignedIn })
+        // [useAuth] Real auth state:', { hasToken: hasValidSession, isSignedIn })
       } catch (err) {
         setRealAuthState(false)
       }
@@ -71,7 +71,7 @@ export function useAuth(): UseAuthReturn {
           const authUser = await getOrCreateSupabaseUser(clerkUser)
           setUser(authUser)
         } catch (err: any) {
-          console.error('[useAuth] Error syncing user:', err)
+          // [useAuth] Error: Error syncing user:', err)
           setError(err.message || 'Failed to sync user')
         }
       } else {
@@ -91,7 +91,7 @@ export function useAuth(): UseAuthReturn {
       // Check if already has valid session
       const existingToken = await getToken()
       if (existingToken) {
-        console.log('[useAuth] Already has valid session')
+        // [useAuth] Already has valid session')
         return
       }
 
@@ -107,12 +107,12 @@ export function useAuth(): UseAuthReturn {
     } catch (err: any) {
       // Don't show error if already signed in
       if (err.message?.includes('already signed in')) {
-        console.log('[useAuth] User is already signed in, skipping error')
+        // [useAuth] User is already signed in, skipping error')
         setRealAuthState(true)
         return
       }
       
-      console.error('[useAuth] Sign in error:', err)
+      // [useAuth] Error: Sign in error:', err)
       setError(err.message || 'Failed to sign in with Google')
     } finally {
       setIsLoading(false)
@@ -125,7 +125,7 @@ export function useAuth(): UseAuthReturn {
       await clerkSignOut()
       setUser(null)
     } catch (err: any) {
-      console.error('[useAuth] Sign out error:', err)
+      // [useAuth] Error: Sign out error:', err)
       setError(err.message || 'Failed to sign out')
     } finally {
       setIsLoading(false)

@@ -27,13 +27,13 @@ export async function createSubscription(
     })
 
     if (error) {
-      console.error('[Razorpay] Error creating subscription:', error)
+      // [Razorpay] Error: Error creating subscription:', error)
       return null
     }
 
     return (data as { subscription_id?: string })?.subscription_id || null
   } catch (error) {
-    console.error('[Razorpay] Create subscription error:', error)
+    // [Razorpay] Error: Create subscription error:', error)
     return null
   }
 }
@@ -67,7 +67,7 @@ function openWebCheckout(
   const Razorpay = (window as any).Razorpay
 
   if (!Razorpay) {
-    console.error('[Razorpay] Razorpay.js not loaded')
+    // [Razorpay] Error: Razorpay.js not loaded')
     resolve(null)
     return
   }
@@ -131,10 +131,10 @@ async function openNativeCheckout(
   } catch (error: any) {
     if (error.code === 'MODULE_NOT_FOUND') {
       // Fallback to opening Razorpay payment link in browser
-      console.log('[Razorpay] Native module not available, using web checkout')
+      // [Razorpay] Native module not available, using web checkout')
       openBrowserCheckout(subscriptionId, resolve)
     } else {
-      console.error('[Razorpay] Checkout error:', error)
+      // [Razorpay] Error: Checkout error:', error)
       resolve(null)
     }
   }
@@ -148,7 +148,7 @@ async function openBrowserCheckout(
 ) {
   try {
     if (!getToken) {
-      console.error('[Razorpay] Cannot get subscription URL - missing getToken')
+      // [Razorpay] Error: Cannot get subscription URL - missing getToken')
       resolve(null)
       return
     }
@@ -161,7 +161,7 @@ async function openBrowserCheckout(
     })
 
     if (error || !(data as { short_url?: string })?.short_url) {
-      console.error('[Razorpay] Could not get subscription URL')
+      // [Razorpay] Error: Could not get subscription URL')
       resolve(null)
       return
     }
@@ -173,7 +173,7 @@ async function openBrowserCheckout(
     // Return null and let the webhook update the status
     resolve(null)
   } catch (error) {
-    console.error('[Razorpay] Browser checkout error:', error)
+    // [Razorpay] Error: Browser checkout error:', error)
     resolve(null)
   }
 }
@@ -197,13 +197,13 @@ export async function verifyPayment(
     })
 
     if (error) {
-      console.error('[Razorpay] Verification error:', error)
+      // [Razorpay] Error: Verification error:', error)
       return false
     }
 
     return (data as { verified?: boolean })?.verified === true
   } catch (error) {
-    console.error('[Razorpay] Verify payment error:', error)
+    // [Razorpay] Error: Verify payment error:', error)
     return false
   }
 }
@@ -227,13 +227,13 @@ export async function getActiveSubscription(
         // No rows returned
         return null
       }
-      console.error('[Razorpay] Get subscription error:', error)
+      // [Razorpay] Error: Get subscription error:', error)
       return null
     }
 
     return data
   } catch (error) {
-    console.error('[Razorpay] Get subscription error:', error)
+    // [Razorpay] Error: Get subscription error:', error)
     return null
   }
 }
@@ -267,13 +267,13 @@ export async function cancelSubscription(
     })
 
     if (error) {
-      console.error('[Razorpay] Cancel error:', error)
+      // [Razorpay] Error: Cancel error:', error)
       return false
     }
 
     return (data as { cancelled?: boolean })?.cancelled === true
   } catch (error) {
-    console.error('[Razorpay] Cancel subscription error:', error)
+    // [Razorpay] Error: Cancel subscription error:', error)
     return false
   }
 }

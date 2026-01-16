@@ -30,7 +30,7 @@ class StreamingAudioRecorder {
 
   async start(): Promise<boolean> {
     try {
-      console.log('[StreamingRecorder] Starting...')
+      // [StreamingRecorder] Starting...')
 
       // Request permissions
       const permission = await Audio.requestPermissionsAsync()
@@ -79,11 +79,11 @@ class StreamingAudioRecorder {
       await this.recording.startAsync()
       this.isRecording = true
 
-      console.log('[StreamingRecorder] Recording started')
+      // [StreamingRecorder] Recording started')
       return true
 
     } catch (error) {
-      console.error('[StreamingRecorder] Start error:', error)
+      // [StreamingRecorder] Error: Start error:', error)
       this.options.onError('Failed to start recording')
       return false
     }
@@ -95,7 +95,7 @@ class StreamingAudioRecorder {
     }
 
     try {
-      console.log('[StreamingRecorder] Stopping...')
+      // [StreamingRecorder] Stopping...')
 
       this.isRecording = false
 
@@ -116,11 +116,11 @@ class StreamingAudioRecorder {
         shouldDuckAndroid: true,
       })
 
-      console.log('[StreamingRecorder] Stopped, URI:', uri)
+      // [StreamingRecorder] Stopped, URI:', uri)
       return uri
 
     } catch (error) {
-      console.error('[StreamingRecorder] Stop error:', error)
+      // [StreamingRecorder] Error: Stop error:', error)
       return null
     }
   }
@@ -176,7 +176,7 @@ export async function wavToPCM16Base64(wavUri: string): Promise<string> {
 
     return btoa(binary)
   } catch (error) {
-    console.error('[StreamingRecorder] WAV to PCM conversion error:', error)
+    // [StreamingRecorder] Error: WAV to PCM conversion error:', error)
     throw error
   }
 }
@@ -251,7 +251,7 @@ export async function recordAndGetPCM16(
 
     return { uri, pcm16Base64 }
   } catch (error) {
-    console.error('[StreamingRecorder] Record error:', error)
+    // [StreamingRecorder] Error: Record error:', error)
     return null
   }
 }

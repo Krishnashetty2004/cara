@@ -29,7 +29,7 @@ export async function requestPermissions(): Promise<boolean> {
     const { granted } = await Audio.requestPermissionsAsync()
     return granted
   } catch (error) {
-    console.error('[Recorder] Permission request error:', error)
+    // [Recorder] Error: Permission request error:', error)
     return false
   }
 }
@@ -43,7 +43,7 @@ export async function setupAudioMode(): Promise<void> {
       playThroughEarpieceAndroid: false,
     })
   } catch (error) {
-    console.error('[Recorder] Audio mode setup error:', error)
+    // [Recorder] Error: Audio mode setup error:', error)
     throw error
   }
 }
@@ -93,7 +93,7 @@ export async function startRecording(onSilenceDetected?: () => void): Promise<Au
       setTimeout(() => {
         // Check if we never received valid metering data
         if (!hasReceivedValidMetering && silenceCallback) {
-          console.log('[Recorder] Android: No valid metering, using fallback timeout')
+          // [Recorder] Android: No valid metering, using fallback timeout')
           silenceCallback()
         }
       }, VAD_CONFIG.ANDROID_FALLBACK_TIMEOUT)
@@ -101,7 +101,7 @@ export async function startRecording(onSilenceDetected?: () => void): Promise<Au
 
     return recording
   } catch (error) {
-    console.error('[Recorder] Start recording error:', error)
+    // [Recorder] Error: Start recording error:', error)
     throw error
   }
 }
@@ -158,7 +158,7 @@ function onRecordingStatusUpdate(status: Audio.RecordingStatus) {
       !silenceTimer &&
       silenceCallback
     ) {
-      console.log('[Recorder] VAD: Silence detected after', silenceDuration, 'ms, stopping recording')
+      // [Recorder] VAD: Silence detected after', silenceDuration, 'ms, stopping recording')
       silenceTimer = setTimeout(() => {
         if (silenceCallback) {
           silenceCallback()
@@ -189,7 +189,7 @@ export async function stopRecording(): Promise<string | null> {
 
     return uri
   } catch (error) {
-    console.error('[Recorder] Stop recording error:', error)
+    // [Recorder] Error: Stop recording error:', error)
     currentRecording = null
     throw error
   }
@@ -215,7 +215,7 @@ export async function cancelRecording(): Promise<void> {
       currentRecording = null
     }
   } catch (error) {
-    console.error('[Recorder] Cancel recording error:', error)
+    // [Recorder] Error: Cancel recording error:', error)
     currentRecording = null
   }
 }

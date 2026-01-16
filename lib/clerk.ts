@@ -10,7 +10,7 @@ export const tokenCache = {
       }
       return await SecureStore.getItemAsync(key)
     } catch (error) {
-      console.error('Error getting token from cache:', error)
+      // Error getting token from cache:', error)
       return null
     }
   },
@@ -22,7 +22,7 @@ export const tokenCache = {
       }
       await SecureStore.setItemAsync(key, value)
     } catch (error) {
-      console.error('Error saving token to cache:', error)
+      // Error saving token to cache:', error)
     }
   },
   async clearToken(key: string): Promise<void> {
@@ -33,7 +33,7 @@ export const tokenCache = {
       }
       await SecureStore.deleteItemAsync(key)
     } catch (error) {
-      console.error('Error clearing token from cache:', error)
+      // Error clearing token from cache:', error)
     }
   },
 }

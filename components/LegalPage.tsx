@@ -86,10 +86,10 @@ export function LegalPage({ title, lastUpdated, sections }: LegalPageProps) {
             }}
           >
             <Text style={{ fontSize: 12, color: '#64748B', textAlign: 'center' }}>
-              Plutas Labs - Cara App
+              Cara App
             </Text>
             <Text style={{ fontSize: 12, color: '#64748B', textAlign: 'center', marginTop: 4 }}>
-              Questions? Contact legal@cara.app
+              Questions? Contact legal@your-domain.com
             </Text>
           </View>
         </ScrollView>
