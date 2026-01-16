@@ -29,6 +29,10 @@
       padding: 0 24px;
     }
 
+    .container.wide {
+      max-width: 960px;
+    }
+
     header {
       padding: 80px 0 60px;
       text-align: center;
@@ -59,6 +63,40 @@
       color: #333;
       margin-bottom: 48px;
       text-align: center;
+    }
+
+    /* Screenshots Gallery */
+    .screenshots {
+      padding: 48px 0;
+      background: #fff;
+      margin: 0 -24px 48px;
+    }
+
+    .screenshots h2 {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 400;
+      margin-bottom: 32px;
+      color: #1a1a1a;
+    }
+
+    .gallery {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      overflow-x: auto;
+      padding: 0 24px 16px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .gallery img {
+      height: 480px;
+      width: auto;
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      scroll-snap-align: center;
+      flex-shrink: 0;
     }
 
     .features {
@@ -158,6 +196,15 @@
       .tagline {
         font-size: 1rem;
       }
+
+      .gallery img {
+        height: 360px;
+      }
+
+      .links {
+        flex-direction: column;
+        gap: 16px;
+      }
     }
   </style>
 </head>
@@ -167,7 +214,21 @@
       <h1>Cara</h1>
       <p class="tagline">Your voice AI companion</p>
     </header>
+  </div>
 
+  <div class="screenshots">
+    <div class="container wide">
+      <h2>Meet your digital friends</h2>
+      <div class="gallery">
+        <img src="screenshots/chromebook_screenshot_2.png" alt="Choose your companion">
+        <img src="screenshots/chromebook_screenshot_3.png" alt="Multiple characters">
+        <img src="screenshots/chromebook_screenshot_4.png" alt="Voice call in progress">
+        <img src="screenshots/chromebook_screenshot_1.png" alt="Cara splash screen">
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
     <main>
       <p class="description">
         An open source voice AI companion app built with React Native and Expo.
