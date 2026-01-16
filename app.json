@@ -1,11 +1,12 @@
 {
+  "_dependencies": "IMPORTANT: Before building, update bundleIdentifier, package, and projectId with your own values",
   "expo": {
-    "name": "Cara",
-    "slug": "cara",
+    "name": "Voice AI Companion",
+    "slug": "voice-ai-companion",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/cara-logo.png",
-    "scheme": "cara",
+    "scheme": "voiceai",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -15,9 +16,9 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.plutaslab.cara",
+      "bundleIdentifier": "com.yourcompany.voiceai",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Cara needs microphone access for voice calls with Preethi"
+        "NSMicrophoneUsageDescription": "This app needs microphone access for voice conversations"
       }
     },
     "android": {
@@ -25,7 +26,7 @@
         "foregroundImage": "./assets/images/cara-logo.png",
         "backgroundColor": "#0F2D4D"
       },
-      "package": "com.plutaslab.cara",
+      "package": "com.yourcompany.voiceai",
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.RECEIVE_BOOT_COMPLETED",
@@ -45,7 +46,7 @@
       [
         "expo-av",
         {
-          "microphonePermission": "Cara needs microphone access for voice calls with Preethi"
+          "microphonePermission": "This app needs microphone access for voice conversations"
         }
       ],
       "expo-secure-store",
@@ -66,7 +67,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "4db68857-a150-4aac-90a7-429b9779f1d1"
+        "projectId": "your-eas-project-id"
       }
     }
   }

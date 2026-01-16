@@ -1,3 +1,16 @@
+/**
+ * @deprecated CLIENT-SIDE API - DO NOT USE IN PRODUCTION
+ *
+ * This file makes direct API calls to OpenAI using a client-embedded API key.
+ * The key will be visible to anyone who decompiles the app bundle.
+ *
+ * For production deployments, use the server-side implementation instead:
+ * - Hook: useHybridCall (hooks/useHybridCall.ts)
+ * - Edge Function: supabase/functions/voice-turn/
+ *
+ * This file is kept for local development/testing convenience only.
+ */
+
 import { CHARACTERS, DEFAULT_CHARACTER } from '@/constants/characters'
 import { CONFIG } from '@/constants/config'
 import type { ConversationMessage, UserMemory, RelationshipData } from '@/types'

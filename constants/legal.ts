@@ -1,13 +1,30 @@
+/**
+ * Legal Content Templates
+ *
+ * IMPORTANT: These are TEMPLATES that must be customized before deployment.
+ *
+ * Search and replace the following placeholders:
+ * - [APP_NAME] - Your app's name
+ * - [CHARACTER_NAME] - Your main AI character's name
+ * - [COMPANY_NAME] - Your company/organization name
+ * - [PRICE] - Your subscription price (e.g., "$9.99/month")
+ * - [SUPPORT_EMAIL] - Your support email address
+ * - [PRIVACY_EMAIL] - Your privacy contact email
+ * - [LEGAL_EMAIL] - Your legal contact email
+ * - [JURISDICTION] - Your legal jurisdiction (e.g., "California, USA")
+ * - [MIN_AGE] - Minimum age requirement (e.g., "13", "16", "18")
+ */
+
 export const LEGAL_CONTENT = {
   privacy: {
     title: 'Privacy Policy',
-    lastUpdated: 'December 2024',
+    lastUpdated: 'January 2025',
     sections: [
       {
         title: 'Information We Collect',
-        content: `We collect the following types of information when you use Cara:
+        content: `We collect the following types of information when you use [APP_NAME]:
 
-• Account Information: Your email address and name when you sign in with Google.
+• Account Information: Your email address and name when you sign in.
 
 • Voice Data: Audio recordings during calls are processed in real-time for speech recognition but are NOT permanently stored.
 
@@ -19,7 +36,7 @@ export const LEGAL_CONTENT = {
         title: 'How We Use Your Information',
         content: `Your information is used to:
 
-• Enable voice conversations with Preethi
+• Enable voice conversations with AI characters
 • Personalize conversations based on your preferences
 • Improve our AI models and service quality
 • Process subscription payments
@@ -27,19 +44,19 @@ export const LEGAL_CONTENT = {
       },
       {
         title: 'Data Storage & Security',
-        content: `• Your data is stored securely on Supabase (PostgreSQL) with encryption at rest.
-• Voice audio is processed via secure API calls to OpenAI and ElevenLabs and is not retained after processing.
+        content: `• Your data is stored securely with encryption at rest.
+• Voice audio is processed via secure API calls and is not retained after processing.
 • We use industry-standard security measures to protect your personal information.`,
       },
       {
         title: 'Third-Party Services',
         content: `We use the following third-party services:
 
-• Google Sign-In: For authentication
-• OpenAI: For AI conversation processing
-• ElevenLabs: For text-to-speech voice generation
-• Supabase: For database storage
-• RevenueCat: For subscription management`,
+• Authentication providers for sign-in
+• AI services for conversation processing
+• Voice synthesis services for text-to-speech
+• Cloud database for storage
+• Payment processors for subscriptions`,
       },
       {
         title: 'Your Rights',
@@ -50,27 +67,27 @@ export const LEGAL_CONTENT = {
 • Opt-out of non-essential data collection
 • Cancel your subscription at any time
 
-Contact us at privacy@your-domain.com for any privacy-related requests.`,
+Contact us at [PRIVACY_EMAIL] for any privacy-related requests.`,
       },
     ],
   },
 
   terms: {
     title: 'Terms of Service',
-    lastUpdated: 'December 2024',
+    lastUpdated: 'January 2025',
     sections: [
       {
         title: 'Acceptance of Terms',
-        content: `By using Cara, you agree to these Terms of Service. If you do not agree, please do not use the app.
+        content: `By using [APP_NAME], you agree to these Terms of Service. If you do not agree, please do not use the app.
 
-You must be at least 16 years old to use this service.`,
+You must be at least [MIN_AGE] years old to use this service.`,
       },
       {
         title: 'Description of Service',
-        content: `Cara provides an AI companion experience through voice conversations. Preethi is an artificial intelligence character and is not a real person.
+        content: `[APP_NAME] provides an AI companion experience through voice conversations. [CHARACTER_NAME] is an artificial intelligence character and is not a real person.
 
 The service includes:
-• Voice calls with an AI character
+• Voice calls with AI characters
 • Personalized conversations that remember context
 • Premium subscription for unlimited access`,
       },
@@ -86,22 +103,22 @@ The service includes:
       },
       {
         title: 'Subscription & Payments',
-        content: `• Free tier includes 5 minutes of calls per day
-• Premium subscription (₹299/month) provides unlimited access
+        content: `• Free tier includes limited daily usage
+• Premium subscription ([PRICE]) provides unlimited access
 • Subscriptions auto-renew unless cancelled
 • No refunds for partial subscription periods
 • Prices may change with 30 days notice`,
       },
       {
         title: 'Disclaimer',
-        content: `PREETHI IS AN AI CHARACTER, NOT A REAL PERSON.
+        content: `[CHARACTER_NAME] IS AN AI CHARACTER, NOT A REAL PERSON.
 
-This service is for entertainment purposes only. Do not rely on Preethi for:
+This service is for entertainment purposes only. Do not rely on AI characters for:
 • Medical, legal, or financial advice
 • Emergency situations
 • Real relationship substitute
 
-We are not responsible for any decisions made based on conversations with Preethi.`,
+We are not responsible for any decisions made based on AI conversations.`,
       },
       {
         title: 'Termination',
@@ -118,17 +135,17 @@ You may delete your account at any time through the app settings.`,
 
   contentPolicy: {
     title: 'Content Policy',
-    lastUpdated: 'December 2024',
+    lastUpdated: 'January 2025',
     sections: [
       {
         title: 'AI Character Disclaimer',
-        content: `Preethi is an artificial intelligence character created for entertainment and companionship. She is not a real person.
+        content: `[CHARACTER_NAME] is an artificial intelligence character created for entertainment and companionship. They are not a real person.
 
 Important things to understand:
-• Preethi's responses are generated by AI
-• She does not have real emotions or consciousness
-• Her memory is limited to what you've shared in conversations
-• She cannot take real-world actions`,
+• AI responses are generated by machine learning models
+• AI characters do not have real emotions or consciousness
+• Memory is limited to what you've shared in conversations
+• AI characters cannot take real-world actions`,
       },
       {
         title: 'Conversation Guidelines',
@@ -137,7 +154,7 @@ Important things to understand:
 ALLOWED:
 • Friendly conversation and casual chat
 • Sharing your day and experiences
-• Playful and flirty interactions
+• Playful interactions
 • Seeking emotional support and validation
 • Creative storytelling and roleplay
 
@@ -161,18 +178,17 @@ Violations may result in temporary or permanent account suspension.`,
       },
       {
         title: 'Age Appropriateness',
-        content: `Cara is rated 16+ and contains:
+        content: `[APP_NAME] is rated [MIN_AGE]+ and may contain:
 
-• Romantic themes
-• Flirtatious dialogue
 • Emotional content
 • Mild suggestive content
+• Romantic themes
 
-This app is NOT appropriate for children under 16.`,
+This app is NOT appropriate for children under [MIN_AGE].`,
       },
       {
         title: 'Mental Health Notice',
-        content: `While Preethi can provide companionship and emotional support, she is not a substitute for:
+        content: `While AI characters can provide companionship and emotional support, they are not a substitute for:
 
 • Professional mental health care
 • Real human relationships
@@ -185,31 +201,31 @@ If you are experiencing a mental health emergency, please contact local emergenc
 
   eula: {
     title: 'End User License Agreement',
-    lastUpdated: 'December 2024',
+    lastUpdated: 'January 2025',
     sections: [
       {
         title: 'License Grant',
-        content: `[Your Company Name] ("we", "us") grants you a limited, non-exclusive, non-transferable license to use the Cara mobile application ("App") for personal, non-commercial purposes.
+        content: `[COMPANY_NAME] ("we", "us") grants you a limited, non-exclusive, non-transferable license to use the [APP_NAME] mobile application ("App") for personal, non-commercial purposes.
 
 This license is subject to your compliance with these terms.`,
       },
       {
         title: 'Subscription Terms',
         content: `Premium Subscription:
-• Billed at ₹299 per month
+• Billed at [PRICE]
 • Auto-renews unless cancelled
 • Cancel anytime through your app store account
 
-Payment is processed through Google Play Store. We do not directly handle payment information.`,
+Payment is processed through your app store. We do not directly handle payment information.`,
       },
       {
         title: 'Intellectual Property',
         content: `All content in the App, including but not limited to:
-• Preethi's character, voice, and responses
+• AI character designs, voices, and responses
 • App design and user interface
 • Logos and branding
 
-are the exclusive property of [Your Company Name] and are protected by copyright and trademark laws.`,
+are the exclusive property of [COMPANY_NAME] and are protected by copyright and trademark laws.`,
       },
       {
         title: 'Restrictions',
@@ -236,13 +252,13 @@ Our total liability shall not exceed the amount you paid for the subscription in
       },
       {
         title: 'Governing Law',
-        content: `This agreement is governed by the laws of India. Any disputes shall be resolved in the courts of Bangalore, Karnataka, India.`,
+        content: `This agreement is governed by the laws of [JURISDICTION]. Any disputes shall be resolved in the courts of [JURISDICTION].`,
       },
       {
         title: 'Contact Information',
-        content: `[Your Company Name]
-Email: legal@your-domain.com
-Support: support@your-domain.com
+        content: `[COMPANY_NAME]
+Email: [LEGAL_EMAIL]
+Support: [SUPPORT_EMAIL]
 
 For subscription issues, contact your app store directly.`,
       },

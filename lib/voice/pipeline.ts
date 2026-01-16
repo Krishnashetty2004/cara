@@ -1,3 +1,18 @@
+/**
+ * @deprecated CLIENT-SIDE VOICE PIPELINE - DO NOT USE IN PRODUCTION
+ *
+ * This file orchestrates client-side API calls (Whisper STT, OpenAI Chat, ElevenLabs TTS).
+ * All underlying modules use client-embedded API keys that are visible in the app bundle.
+ *
+ * For production deployments, use the server-side implementation instead:
+ * - Hook: useHybridCall (hooks/useHybridCall.ts)
+ * - Edge Function: supabase/functions/voice-turn/
+ *
+ * The server-side implementation is also faster (uses Groq for inference).
+ *
+ * This file is kept for local development/testing convenience only.
+ */
+
 import { transcribeAudio } from './whisper'
 import { getCharacterResponse, resetConversation as resetChat, getConversationHistory, getCurrentCharacter } from './chat'
 import { generateVoice, cleanupAudioCache } from './elevenlabs'

@@ -1,6 +1,12 @@
 {
-  "name": "cara",
+  "name": "voice-ai-companion",
   "version": "1.0.0",
+  "description": "Open source voice AI companion app built with React Native and Expo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/voice-ai-companion"
+  },
+  "license": "MIT",
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
